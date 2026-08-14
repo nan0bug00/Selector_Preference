@@ -1,9 +1,42 @@
 const KEY = "selector-preference-mock";
+try {
+  const savedTheme = JSON.parse(localStorage.getItem(KEY) || "{}").theme;
+  if (savedTheme) document.documentElement.setAttribute("data-theme", savedTheme);
+} catch (e) {}
 
 const NOTCHES = {
   interruption: ["Stay out", "Rare", "Sometimes", "Chatty", "Jump in freely"],
   world: ["Leave a gap", "Rare follow-up", "Sometimes continue", "Keep talking", "Always pick someone"],
   room: ["Stay out", "Rare comment", "Sometimes", "Often", "Pile on"],
+};
+
+const HINTS = {
+  interruption: [
+    "Companions stay quiet unless named, or Interjection says barge in.",
+    "They jump in only on a hard Interjection hit. Most ticks stay silent.",
+    "About one companion-worthy beat in three, if Interjection fits.",
+    "They comment when Interjection fits — not every tick, no pep-talk.",
+    "They take the beat whenever Interjection says they would.",
+  ],
+  world: [
+    "After a spark, prefer silence. A quiet room is allowed.",
+    "Someone speaks only if asked or named. Otherwise the exchange ends.",
+    "A plausible next line is enough; a gap is also fine.",
+    "Prefer a speaker if anyone has a line. Silence can still end it.",
+    "No silence option. Pick the best candidate.",
+  ],
+  room: [
+    "Bystanders do not comment on other people's talk.",
+    "Only if they were named, or Interjection is a hard hit.",
+    "A bystander may react to a loud scene if Interjection fits.",
+    "Public scenes invite a nearby reaction. Pick the best Interjection.",
+    "The room may pile on. Still one speaker this tick.",
+  ],
+};
+
+const YIELD_HINTS = {
+  true: "If they asked you something, wait. 0 means yield, not an empty room.",
+  false: "A question aimed at you is not a special hold.",
 };
 
 const PACKETS = {
@@ -37,6 +70,7 @@ const DEFAULTS = {
   yieldAfterQuestion: true,
   scene: "your-turn",
   preview: false,
+  theme: "dark",
 };
 
 const CANDIDATES = [
@@ -334,14 +368,22 @@ function renderTicks(el, key, state) {
   });
 }
 
+function applyTheme(theme) {
+  document.documentElement.setAttribute("data-theme", theme || "dark");
+}
+
 function paint(state) {
+  applyTheme(state.theme);
   document.body.classList.toggle("is-preview", !!state.preview);
   document.querySelectorAll("[data-notches]").forEach((el) => {
     renderTicks(el, el.getAttribute("data-notches"), state);
   });
-  document.querySelectorAll("[data-value]").forEach((el) => {
-    const key = el.getAttribute("data-value");
-    el.textContent = NOTCHES[key][state[key]];
+  document.querySelectorAll("[data-hint]").forEach((el) => {
+    const key = el.getAttribute("data-hint");
+    el.textContent = HINTS[key][state[key]];
+  });
+  document.querySelectorAll("[data-yield-hint]").forEach((el) => {
+    el.textContent = YIELD_HINTS[state.yieldAfterQuestion];
   });
   document.querySelectorAll("[data-toggle=yield]").forEach((el) => {
     el.classList.toggle("is-on", state.yieldAfterQuestion);
@@ -356,6 +398,9 @@ function paint(state) {
     if (el.dataset.labelToggle !== undefined) {
       el.textContent = state.preview ? "Hide letter preview" : "Show letter preview";
     }
+  });
+  document.querySelectorAll("[data-theme-set]").forEach((el) => {
+    el.classList.toggle("is-on", el.getAttribute("data-theme-set") === state.theme);
   });
   document.querySelectorAll("[data-scene]").forEach((el) => {
     const id = el.getAttribute("data-scene");
@@ -387,6 +432,13 @@ function boot() {
   document.querySelectorAll("[data-scene]").forEach((el) => {
     el.addEventListener("click", () => {
       state.scene = el.getAttribute("data-scene");
+      save(state);
+      paint(state);
+    });
+  });
+  document.querySelectorAll("[data-theme-set]").forEach((el) => {
+    el.addEventListener("click", () => {
+      state.theme = el.getAttribute("data-theme-set");
       save(state);
       paint(state);
     });

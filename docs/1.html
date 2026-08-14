@@ -27,41 +27,45 @@
     <div class="overlay-root">
       <aside class="panel controls">
         <div class="panel-head">
-          <div>
-            <h1>Selector Preference</h1>
-            <p class="sub">Same file the MCM writes. Overlay is the fast door.</p>
+          <div class="panel-head-row">
+            <div>
+              <h1>Selector Preference</h1>
+              <p class="sub">Same file the MCM writes. Overlay is the fast door.</p>
+            </div>
+            <button class="close-x" type="button" aria-label="Close">×</button>
           </div>
-          <button class="close-x" type="button" aria-label="Close">×</button>
+          <div class="theme-switch" role="group" aria-label="Color theme">
+            <button type="button" data-theme-set="dark">Dark</button>
+            <button type="button" data-theme-set="light">Light</button>
+            <button type="button" data-theme-set="colorblind" title="Colorblind friendly">Colorblind</button>
+          </div>
         </div>
         <div class="panel-body">
           <div class="setting">
             <div class="setting-label">
               <h2>Follower interruption</h2>
-              <span class="setting-value" data-value="interruption"></span>
             </div>
             <div class="notch-track" data-notches="interruption"></div>
-            <p class="hint">Companions during a talk you are already in.</p>
+            <p class="hint" data-hint="interruption"></p>
           </div>
           <div class="setting">
             <div class="setting-label">
               <h2>Let the world continue</h2>
-              <span class="setting-value" data-value="world"></span>
             </div>
             <div class="notch-track" data-notches="world"></div>
-            <p class="hint">After GameMaster or a world NPC speaks.</p>
+            <p class="hint" data-hint="world"></p>
           </div>
           <div class="setting">
             <div class="setting-label">
               <h2>Room reaction</h2>
-              <span class="setting-value" data-value="room"></span>
             </div>
             <div class="notch-track" data-notches="room"></div>
-            <p class="hint">Bystanders on a loud public scene.</p>
+            <p class="hint" data-hint="room"></p>
           </div>
           <div class="setting toggle-row">
             <div>
               <h2>Yield after a question to you</h2>
-              <p class="hint">Almost always leave this on.</p>
+              <p class="hint" data-yield-hint></p>
             </div>
             <button class="toggle" type="button" data-toggle="yield" aria-pressed="true"></button>
           </div>
@@ -75,7 +79,7 @@
         <div class="panel-head">
           <div>
             <h1>Compiled letter</h1>
-            <p class="sub">Gold blocks are this plugin. The rest is the kind of thing SkyrimNet already injects. Example scene, not live game data.</p>
+            <p class="sub">Highlighted blocks are this plugin. The rest is the kind of thing SkyrimNet already injects. Example scene, not live game data.</p>
           </div>
         </div>
         <div class="panel-body" style="padding-bottom: 8px;">
