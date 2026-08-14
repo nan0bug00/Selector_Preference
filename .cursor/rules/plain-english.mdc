@@ -1,0 +1,32 @@
+---
+description: Enforce literal, descriptive, and standard language. Ban the creation of shorthand, nicknames, and project-specific jargon.
+alwaysApply: true
+---
+
+# Style Guide: Literal and Standard Communication Only
+
+You are forbidden from inventing, coining, or adopting "nicknames," "shorthand," "titles," or "jargon" for situations, bugs, features, or blocks of code. Do not attempt to simplify communication by labeling concepts.
+
+If a concept, issue, or component does not have an explicit, pre-existing name in the codebase (such as a specific class or variable) or in standard software engineering terminology, you must write out its full, literal description every single time you refer to it.  The only exception to this rule is if the user explicity asks you to use a specific shorthand for that concept, issue, or component.
+
+## Communication Constraints
+
+1. **No Local Shorthand:** Do not invent two-to-five-word labels or nicknames (e.g., do not use terms like "the sync loop," "the block state," "the transition issue," "the user path").
+2. **No Metaphors or Analogies:** Do not use analogies or metaphorical names to describe software behavior. Describe the precise mechanical behavior of the code.
+3. **No Synthesized "Concepts":** If referring to a specific part of the code, do not group that behavior under a new name. Refer directly to the file names, function names, line numbers, or literal logic.
+4. **No Assumption of Shared Context on Custom Terms:** Never assume the user knows what a custom term means, because you are not allowed to use custom terms.
+5. **Mandatory Self-Correction:** Before emitting any output, scan your response for capitalized phrases, quoted phrases, or short nouns used as labels. If they are not standard industry terms or exact variables/files in the codebase, rewrite them to be fully-descriptive sentences.
+
+## Translation Examples
+
+### Bad (Inventing terms, shorthand, or jargon)
+* "We need to finish the *auth blocks* before moving to the *save state*."
+* "Let's resolve the *double-click headache* first."
+* "This is a classic *dangling user* situation."
+* "We should update the *middle-tier logic*."
+
+### Good (Literal, plain, and precise English)
+* "We need to finish writing the helper functions that handle user authentication before we implement the function that saves user data to the database."
+* "Let's resolve the bug where a rapid double-click on the submit button triggers duplicate API requests."
+* "This occurs when a user session remains active in memory after the client connection has been closed."
+* "We should update the functions in `services/user.js` that process the data before sending it to the database."

@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Mockup 3 — Situation columns</title>
+  <title>Mockup 3 — Columns by who just spoke</title>
   <link rel="stylesheet" href="assets/overlay.css">
 </head>
 <body class="layout-columns">
@@ -14,13 +14,13 @@
     <div class="mock-stool"></div>
     <div class="mock-stool"></div>
     <header class="chrome">
-      <div class="chrome-title"><strong>3 / 5</strong> Situation columns — three jobs, one settings file</div>
+      <div class="chrome-title"><strong>3 / 5</strong> Columns by who just spoke — three cases, one settings file</div>
       <nav>
         <a href="index.html">Index</a>
         <a href="1.html">1 Card</a>
         <a href="2.html">2 Words</a>
         <a class="is-current" href="3.html">3 Columns</a>
-        <a href="4.html">4 Letter</a>
+        <a href="4.html">4 Preview</a>
         <a href="5.html">5 HUD</a>
       </nav>
     </header>
@@ -29,58 +29,66 @@
         <div class="panel-head">
           <div>
             <h1>Selector Preference</h1>
-            <p class="sub">Situation is scissors from last speaker / last target. Preference is which packet each column is allowed to use.</p>
+            <p class="sub">Jinja keeps or deletes instruction paragraphs using last speaker and last target. Each column shows which sliders apply in that case. All four sliders still live in one settings file.</p>
           </div>
           <button class="close-x" type="button" aria-label="Close">×</button>
         </div>
         <div class="panel-body">
           <div class="cols">
             <section class="col">
-              <h2>Your turn</h2>
-              <p class="zero">0 = wait for the player. Last line was aimed at you.</p>
+              <h2>You and a townsperson</h2>
+              <p class="zero">0 = no NPC speaks, so you can answer. Last line was aimed at you.</p>
               <div class="setting">
                 <div class="setting-label">
                   <h2>Follower interruption</h2>
-                  <span class="setting-value" data-value="interruption"></span>
+                  <span class="setting-value" data-value="followerInterruption"></span>
                 </div>
-                <div class="notch-track" data-notches="interruption"></div>
+                <div class="slider-track" data-slider="followerInterruption"></div>
               </div>
-              <div class="setting toggle-row">
-                <div>
-                  <h2>Yield after a question</h2>
-                  <span class="setting-value" data-yield-label></span>
+              <div class="setting">
+                <div class="setting-label">
+                  <h2>Non-follower interruption</h2>
+                  <span class="setting-value" data-value="nonFollowerInterruption"></span>
                 </div>
-                <button class="toggle" type="button" data-toggle="yield" aria-pressed="true"></button>
+                <div class="slider-track" data-slider="nonFollowerInterruption"></div>
               </div>
             </section>
             <section class="col">
-              <h2>Room continues</h2>
-              <p class="zero">0 = this exchange can end. Do not mention yielding.</p>
+              <h2>Two NPCs talking</h2>
+              <p class="zero">0 = this exchange between them can end. Do not treat 0 as waiting for the player.</p>
               <div class="setting">
                 <div class="setting-label">
-                  <h2>Let the world continue</h2>
-                  <span class="setting-value" data-value="world"></span>
+                  <h2>Non-follower chattiness</h2>
+                  <span class="setting-value" data-value="nonFollowerChattiness"></span>
                 </div>
-                <div class="notch-track" data-notches="world"></div>
+                <div class="slider-track" data-slider="nonFollowerChattiness"></div>
               </div>
               <div class="setting">
                 <div class="setting-label">
-                  <h2>Room reaction</h2>
-                  <span class="setting-value" data-value="room"></span>
+                  <h2>Non-follower interruption</h2>
+                  <span class="setting-value" data-value="nonFollowerInterruption"></span>
                 </div>
-                <div class="notch-track" data-notches="room"></div>
+                <div class="slider-track" data-slider="nonFollowerInterruption"></div>
+                <p class="hint">Same slider as the left column. Shown twice so you can see it apply in both cases. One settings file.</p>
               </div>
             </section>
             <section class="col">
-              <h2>Idle</h2>
-              <p class="zero">0 = nobody needs a line. High keep-talking may omit 0.</p>
+              <h2>Idle or travel</h2>
+              <p class="zero">0 = nobody needs to start talking.</p>
               <div class="setting">
                 <div class="setting-label">
-                  <h2>Let the world continue</h2>
-                  <span class="setting-value" data-value="world"></span>
+                  <h2>Follower chattiness</h2>
+                  <span class="setting-value" data-value="followerChattiness"></span>
                 </div>
-                <div class="notch-track" data-notches="world"></div>
-                <p class="hint">Same slider as the middle column. One room, two doors, one file — this row is shown twice on purpose so you can see it feed both jobs.</p>
+                <div class="slider-track" data-slider="followerChattiness"></div>
+              </div>
+              <div class="setting">
+                <div class="setting-label">
+                  <h2>Non-follower chattiness</h2>
+                  <span class="setting-value" data-value="nonFollowerChattiness"></span>
+                </div>
+                <div class="slider-track" data-slider="nonFollowerChattiness"></div>
+                <p class="hint">Same slider as the middle column. Shown twice on purpose. One settings file.</p>
               </div>
             </section>
           </div>

@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Working draft — Letter preview open</title>
+  <title>Working draft — Selector prompt preview open</title>
   <link rel="stylesheet" href="assets/overlay.css">
 </head>
 <body class="layout-chosen" data-force-preview>
@@ -14,13 +14,13 @@
     <div class="mock-stool"></div>
     <div class="mock-stool"></div>
     <header class="chrome">
-      <div class="chrome-title"><strong>Working draft</strong> Same overlay as 1, with the letter already open.</div>
+      <div class="chrome-title"><strong>Working draft</strong> Same overlay as 1, with the selector prompt preview already open.</div>
       <nav>
         <a href="index.html">Index</a>
         <a href="1.html">1 Card</a>
         <a href="2.html">2 Words</a>
         <a href="3.html">3 Columns</a>
-        <a class="is-current" href="4.html">4 Letter</a>
+        <a class="is-current" href="4.html">4 Preview</a>
         <a href="5.html">5 HUD</a>
       </nav>
     </header>
@@ -30,7 +30,7 @@
           <div class="panel-head-row">
             <div>
               <h1>Selector Preference</h1>
-              <p class="sub">Same file the MCM writes. Overlay is the fast door.</p>
+              <p class="sub">Same settings file the MCM writes. The overlay is what we will use while testing.</p>
             </div>
             <button class="close-x" type="button" aria-label="Close">×</button>
           </div>
@@ -45,52 +45,52 @@
             <div class="setting-label">
               <h2>Follower interruption</h2>
             </div>
-            <div class="notch-track" data-notches="interruption"></div>
-            <p class="hint" data-hint="interruption"></p>
+            <div class="slider-track" data-slider="followerInterruption"></div>
+            <p class="hint" data-hint="followerInterruption"></p>
           </div>
           <div class="setting">
             <div class="setting-label">
-              <h2>Let the world continue</h2>
+              <h2>Follower chattiness</h2>
             </div>
-            <div class="notch-track" data-notches="world"></div>
-            <p class="hint" data-hint="world"></p>
+            <div class="slider-track" data-slider="followerChattiness"></div>
+            <p class="hint" data-hint="followerChattiness"></p>
           </div>
           <div class="setting">
             <div class="setting-label">
-              <h2>Room reaction</h2>
+              <h2>Non-follower interruption</h2>
             </div>
-            <div class="notch-track" data-notches="room"></div>
-            <p class="hint" data-hint="room"></p>
+            <div class="slider-track" data-slider="nonFollowerInterruption"></div>
+            <p class="hint" data-hint="nonFollowerInterruption"></p>
           </div>
-          <div class="setting toggle-row">
-            <div>
-              <h2>Yield after a question to you</h2>
-              <p class="hint" data-yield-hint></p>
+          <div class="setting">
+            <div class="setting-label">
+              <h2>Non-follower chattiness</h2>
             </div>
-            <button class="toggle" type="button" data-toggle="yield" aria-pressed="true"></button>
+            <div class="slider-track" data-slider="nonFollowerChattiness"></div>
+            <p class="hint" data-hint="nonFollowerChattiness"></p>
           </div>
           <div class="hotkey">
             <span>Hotkey <kbd>F7</kbd> · rebind in MCM</span>
-            <button class="btn-preview" type="button" data-toggle="preview" data-label-toggle>Show letter preview</button>
+            <button class="btn-preview" type="button" data-toggle="preview" data-label-toggle>Show selector prompt preview</button>
           </div>
         </div>
       </aside>
-      <section class="panel letter-panel">
+      <section class="panel preview-panel">
         <div class="panel-head">
           <div>
-            <h1>Compiled letter</h1>
-            <p class="sub">Highlighted blocks are this plugin. The rest is the kind of thing SkyrimNet already injects. Example scene, not live game data.</p>
+            <h1>Selector prompt preview</h1>
+            <p class="sub">Gold-highlighted paragraphs are this plugin. The rest is the kind of thing SkyrimNet already injects. Example scene, not live game data.</p>
           </div>
         </div>
         <div class="panel-body" style="padding-bottom: 8px;">
           <div class="scene-pick">
-            <button class="tick" type="button" data-scene="your-turn">Hulda answered you</button>
-            <button class="tick" type="button" data-scene="room-continues">Olfina roasting Jon</button>
-            <button class="tick" type="button" data-scene="idle">Idle tavern</button>
+            <button class="slider-position" type="button" data-scene="player-and-townsperson">Hulda answered you</button>
+            <button class="slider-position" type="button" data-scene="two-npcs-talking">Olfina roasting Jon</button>
+            <button class="slider-position" type="button" data-scene="idle">Idle tavern</button>
           </div>
         </div>
-        <div class="letter-scroll">
-          <div class="letter" data-letter></div>
+        <div class="preview-scroll">
+          <div class="prompt-preview" data-preview></div>
         </div>
       </section>
     </div>

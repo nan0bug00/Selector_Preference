@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Mockup 2 — Word notches</title>
+  <title>Mockup 2 — Named buttons</title>
   <link rel="stylesheet" href="assets/overlay.css">
 </head>
 <body class="layout-pills">
@@ -14,13 +14,13 @@
     <div class="mock-stool"></div>
     <div class="mock-stool"></div>
     <header class="chrome">
-      <div class="chrome-title"><strong>2 / 5</strong> Word notches — packets are names, not a percentage</div>
+      <div class="chrome-title"><strong>2 / 5</strong> Named buttons — each position is a named instruction paragraph, not a percentage</div>
       <nav>
         <a href="index.html">Index</a>
         <a href="1.html">1 Card</a>
         <a class="is-current" href="2.html">2 Words</a>
         <a href="3.html">3 Columns</a>
-        <a href="4.html">4 Letter</a>
+        <a href="4.html">4 Preview</a>
         <a href="5.html">5 HUD</a>
       </nav>
     </header>
@@ -29,7 +29,7 @@
         <div class="panel-head">
           <div>
             <h1>Selector Preference</h1>
-            <p class="sub">Click a word. That is the only packet meta will see for that slider.</p>
+            <p class="sub">Click a word. That is the only instruction paragraph the meta model will see for that slider.</p>
           </div>
           <button class="close-x" type="button" aria-label="Close">×</button>
         </div>
@@ -37,33 +37,34 @@
           <div class="setting">
             <div class="setting-label">
               <h2>Follower interruption</h2>
-              <span class="setting-value" data-value="interruption"></span>
+              <span class="setting-value" data-value="followerInterruption"></span>
             </div>
-            <div class="pill-row" data-notches="interruption"></div>
-            <p class="hint">Stay out of a 1-on-1 you started, or let a rude companion still barge in. Interjection decides who.</p>
+            <div class="pill-row" data-slider="followerInterruption"></div>
+            <p class="hint" data-hint="followerInterruption"></p>
           </div>
           <div class="setting">
             <div class="setting-label">
-              <h2>Let the world continue</h2>
-              <span class="setting-value" data-value="world"></span>
+              <h2>Follower chattiness</h2>
+              <span class="setting-value" data-value="followerChattiness"></span>
             </div>
-            <div class="pill-row" data-notches="world"></div>
-            <p class="hint">How hard to pick someone after GameMaster sparks a line, instead of stalling the room.</p>
+            <div class="pill-row" data-slider="followerChattiness"></div>
+            <p class="hint" data-hint="followerChattiness"></p>
           </div>
           <div class="setting">
             <div class="setting-label">
-              <h2>Room reaction</h2>
-              <span class="setting-value" data-value="room"></span>
+              <h2>Non-follower interruption</h2>
+              <span class="setting-value" data-value="nonFollowerInterruption"></span>
             </div>
-            <div class="pill-row" data-notches="room"></div>
-            <p class="hint">Jon being discussed is involved. This row is for people who are actually bystanders.</p>
+            <div class="pill-row" data-slider="nonFollowerInterruption"></div>
+            <p class="hint" data-hint="nonFollowerInterruption"></p>
           </div>
-          <div class="setting toggle-row">
-            <div>
-              <h2>Yield after a question to you</h2>
-              <p class="hint">If Hulda asked you something, <code>0</code> means wait. Not “nobody has a line.”</p>
+          <div class="setting">
+            <div class="setting-label">
+              <h2>Non-follower chattiness</h2>
+              <span class="setting-value" data-value="nonFollowerChattiness"></span>
             </div>
-            <button class="toggle" type="button" data-toggle="yield" aria-pressed="true"></button>
+            <div class="pill-row" data-slider="nonFollowerChattiness"></div>
+            <p class="hint" data-hint="nonFollowerChattiness"></p>
           </div>
           <div class="hotkey">Hotkey <kbd>F7</kbd> · rebind in MCM</div>
         </div>

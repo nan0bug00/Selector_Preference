@@ -13,8 +13,8 @@ html[data-theme="dark"] {
   --border: #333338;
   --border-hover: #44444b;
   --success: #4ade80;
-  --letter-bg: #141418;
-  --letter-fg: #c8c4bb;
+  --preview-bg: #141418;
+  --preview-fg: #c8c4bb;
   --chrome-bg: rgba(12, 12, 16, 0.82);
   --radius: 6px;
   --radius-lg: 10px;
@@ -37,8 +37,8 @@ html[data-theme="light"] {
   --border: #d4cbb8;
   --border-hover: #b9ae97;
   --success: #2f7d4a;
-  --letter-bg: #f4eee0;
-  --letter-fg: #3a3428;
+  --preview-bg: #f4eee0;
+  --preview-fg: #3a3428;
   --chrome-bg: rgba(248, 243, 232, 0.9);
   --shadow-lg: 0 12px 36px rgba(40, 28, 12, 0.28);
 }
@@ -57,8 +57,8 @@ html[data-theme="colorblind"] {
   --border: #5a5a5a;
   --border-hover: #8a8a8a;
   --success: #e69f00;
-  --letter-bg: #0e0e0e;
-  --letter-fg: #f0f0f0;
+  --preview-bg: #0e0e0e;
+  --preview-fg: #f0f0f0;
   --chrome-bg: rgba(10, 10, 10, 0.88);
   --shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.65);
 }
@@ -260,7 +260,7 @@ input {
   background: var(--accent-muted);
 }
 
-html[data-theme="colorblind"] .tick.is-on,
+html[data-theme="colorblind"] .slider-position.is-on,
 html[data-theme="colorblind"] .theme-switch button.is-on,
 html[data-theme="colorblind"] .btn-preview.is-on,
 html[data-theme="colorblind"] .chrome a.is-current {
@@ -338,14 +338,14 @@ html[data-theme="colorblind"] .toggle.is-on {
   line-height: 1.4;
 }
 
-.notch-track {
+.slider-track {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
   gap: 4px;
   margin-top: 8px;
 }
 
-.tick {
+.slider-position {
   appearance: none;
   border: 1px solid var(--border);
   background: var(--bg-input);
@@ -357,12 +357,12 @@ html[data-theme="colorblind"] .toggle.is-on {
   padding: 4px 6px;
 }
 
-.tick:hover {
+.slider-position:hover {
   border-color: var(--border-hover);
   color: var(--text-primary);
 }
 
-.tick.is-on {
+.slider-position.is-on {
   background: var(--accent-muted);
   border-color: var(--accent);
   color: var(--accent);
@@ -528,7 +528,7 @@ kbd {
   gap: 6px;
 }
 
-.pill-row .tick {
+.pill-row .slider-position {
   flex: 1 1 auto;
   min-width: 88px;
 }
@@ -567,7 +567,7 @@ kbd {
   line-height: 1.4;
 }
 
-.layout-letter .overlay-root {
+.layout-preview .overlay-root {
   display: grid;
   grid-template-columns: minmax(280px, 380px) 1fr;
   gap: 16px;
@@ -621,17 +621,17 @@ body.layout-chosen .stage {
   margin-top: auto;
 }
 
-.layout-chosen .letter-panel {
+.layout-chosen .preview-panel {
   display: none;
   flex: 1 1 auto;
   min-width: 0;
 }
 
-.layout-chosen.is-preview .letter-panel {
+.layout-chosen.is-preview .preview-panel {
   display: flex;
 }
 
-.layout-chosen .letter-scroll {
+.layout-chosen .preview-scroll {
   overflow: auto;
   flex: 1;
   min-height: 0;
@@ -657,29 +657,29 @@ body.layout-chosen .stage {
   background: var(--accent-muted);
 }
 
-.letter {
+.prompt-preview {
   padding: 16px 18px;
-  background: var(--letter-bg);
+  background: var(--preview-bg);
   border: 1px dashed var(--border-hover);
   border-radius: var(--radius);
   font-family: Consolas, "Noto Sans Mono", monospace;
   font-size: 13px;
   line-height: 1.55;
-  color: var(--letter-fg);
+  color: var(--preview-fg);
 }
 
-.letter-doc {
+.prompt-doc {
   margin: 0;
   white-space: pre-wrap;
 }
 
-.letter-tag {
+.prompt-tag {
   color: var(--text-muted);
   letter-spacing: 0.04em;
   text-transform: lowercase;
 }
 
-.pkt {
+.instruction-paragraph {
   white-space: normal;
   margin: 10px 0;
   padding: 8px 10px;
@@ -689,17 +689,13 @@ body.layout-chosen .stage {
   color: var(--text-primary);
 }
 
-.pkt-label {
+.instruction-label {
   color: var(--accent);
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
   margin-bottom: 4px;
-}
-
-.letter .job {
-  color: var(--accent);
 }
 
 .scene-pick {
@@ -739,14 +735,14 @@ body.layout-chosen .stage {
   padding: 8px 0;
 }
 
-.layout-hud .tick {
+.layout-hud .slider-position {
   min-height: 28px;
   font-size: 10px;
 }
 
 @media (max-width: 860px) {
   .cols,
-  .layout-letter .overlay-root {
+  .layout-preview .overlay-root {
     grid-template-columns: 1fr;
   }
 
@@ -758,7 +754,7 @@ body.layout-chosen .stage {
   }
 
   .layout-chosen .controls,
-  .layout-chosen .letter-panel {
+  .layout-chosen .preview-panel {
     width: 100%;
     flex: 1 1 0;
     min-height: 0;

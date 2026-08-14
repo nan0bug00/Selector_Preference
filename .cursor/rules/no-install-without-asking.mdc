@@ -1,0 +1,10 @@
+---
+description: Do not install software unless the user explicitly asks
+alwaysApply: true
+---
+
+# Installing software
+
+Do not install packages, runtimes, CLIs, or other software unless the user explicitly asks for that install in this conversation.
+
+GitHub CLI, CMake, Node, Python packages, and similar tools are included. "It would help me push" is not permission. Ask first.

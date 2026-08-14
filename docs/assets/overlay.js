@@ -4,71 +4,75 @@ try {
   if (savedTheme) document.documentElement.setAttribute("data-theme", savedTheme);
 } catch (e) {}
 
-const NOTCHES = {
-  interruption: ["Stay out", "Rare", "Sometimes", "Chatty", "Jump in freely"],
-  world: ["Leave a gap", "Rare follow-up", "Sometimes continue", "Keep talking", "Always pick someone"],
-  room: ["Stay out", "Rare comment", "Sometimes", "Often", "Pile on"],
+const SLIDER_LABELS = {
+  followerInterruption: ["Stay out", "Rare", "Sometimes", "Often", "Jump in"],
+  followerChattiness: ["Quiet", "Rare", "Sometimes", "Chatty", "Very chatty"],
+  nonFollowerInterruption: ["Stay out", "Low", "Medium", "Chatty"],
+  nonFollowerChattiness: ["Quiet", "Sometimes", "Chatty"],
 };
 
 const HINTS = {
-  interruption: [
-    "Companions stay quiet unless named, or Interjection says barge in.",
-    "They jump in only on a hard Interjection hit. Most ticks stay silent.",
-    "About one companion-worthy beat in three, if Interjection fits.",
-    "They comment when Interjection fits — not every tick, no pep-talk.",
-    "They take the beat whenever Interjection says they would.",
+  followerInterruption: [
+    "Do not pick a follower as speaker while you are talking to a townsperson. That townsperson can still answer you.",
+    "Pick a follower only if they were named, referred to, their job actually requires a response here, or Interjection names a specific person who was just discussed.",
+    "Same as Rare, plus the full Interjection list, plus a real conflict in the log (argument, threat, or fight — not a calm directions question).",
+    "Same as Sometimes, plus a decision in the log that affects this follower, plus the long personality paragraph giving a reason that points at the last line.",
+    "Companions have broad latitude to enter conversations as they see fit. Interjection and personality stay in the prompt. Being nearby is not a reason by itself.",
   ],
-  world: [
-    "After a spark, prefer silence. A quiet room is allowed.",
-    "Someone speaks only if asked or named. Otherwise the exchange ends.",
-    "A plausible next line is enough; a gap is also fine.",
-    "Prefer a speaker if anyone has a line. Silence can still end it.",
-    "No silence option. Pick the best candidate.",
+  followerChattiness: [
+    "Road comments and starting a new talk are rare. This slider does not apply while you are talking to a townsperson.",
+    "Occasional questions to you, or a comment while traveling, without a crisis.",
+    "Followers speak now and then when they are not cutting into your conversation with someone else.",
+    "Followers often start talk or comment on the road. Still not a reason to cut in on you and a townsperson.",
+    "Followers speak freely when they are not interrupting you and a townsperson. Rain comments and sweetroll comments are allowed.",
   ],
-  room: [
-    "Bystanders do not comment on other people's talk.",
-    "Only if they were named, or Interjection is a hard hit.",
-    "A bystander may react to a loud scene if Interjection fits.",
-    "Public scenes invite a nearby reaction. Pick the best Interjection.",
-    "The room may pile on. Still one speaker this tick.",
+  nonFollowerInterruption: [
+    "Do not pick a bystander as speaker. The person you are already talking to can still be picked.",
+    "Pick a bystander only if they were named or referred to, their job actually requires a response here, or Interjection names a specific person who was just discussed.",
+    "Same as Low, plus the full Interjection list, plus a real conflict in the log they have a job or Interjection reason to enter.",
+    "Same as Medium, plus the long personality paragraph giving a reason that points at the last line. Being nearby is still not enough.",
+  ],
+  nonFollowerChattiness: [
+    "Idle comments from townspeople are rare. The person who was just addressed can still continue.",
+    "Townspeople may continue a line GameMaster started, or talk to each other, without cutting into a conversation they are not in.",
+    "Townspeople speak freely when they are not cutting in. Still one speaker. The person who just spoke cannot speak again.",
   ],
 };
 
-const YIELD_HINTS = {
-  true: "If they asked you something, wait. 0 means yield, not an empty room.",
-  false: "A question aimed at you is not a special hold.",
-};
-
-const PACKETS = {
-  interruption: [
-    "Followers are not a reason to speak. Do not pick a companion unless they were addressed by name, or their Interjection says they would barge in on this exact beat.",
-    "A companion may speak only if Interjection is a direct hit and jumping in would be in character. Most ticks: output 0.",
-    "Companions may take about one beat in three when Interjection fits. Do not treat [COMPANION] as a speaking magnet.",
-    "Companions may comment when Interjection fits. Still not every tick. No pep-talk, no filling silence for the party's sake.",
-    "Companions may take the beat whenever Interjection says they would. Still one speaker. Still honor a yield packet if it is in this letter.",
+const INSTRUCTION_PARAGRAPHS = {
+  followerInterruption: [
+    "Followers stay on the candidate list. Do not pick a follower as speaker. The townsperson you are talking to can still be picked. If they just spoke to you, output 0 so you can answer. Interjection, [COMPANION], and [ENGAGED] do not override this.",
+    "Pick a follower only if they were addressed or referred to by name, their job would actually demand a response in this exchange, or the Interjection list names a specific person (friend, lover, family, rival) who was just talked about. Topic triggers on that list do not count yet.",
+    "Everything in Rare still counts, and the full Interjection list may count. Also pick a follower if they have a reason, tied to what just happened, to warn, object, de-escalate, or escalate a real conflict in the log — not a calm directions question.",
+    "Everything in Sometimes still counts, plus a decision in the recent log that affects this follower (quest, house, adoption, new companion), plus the one-line summary and long personality paragraph giving a reason that points at this last line.",
+    "Do not keep the reason lists from lower positions as a filter. The model uses the conversation log plus this follower's summary, Interjection, and personality, and judges for itself whether they would enter. Still one speaker. The person who just spoke cannot speak again. Being nearby is not a reason by itself.",
   ],
-  world: [
-    "Prefer 0. The spark already happened. A gap in the room is allowed.",
-    "Pick someone only if they were asked a question or named. Otherwise 0 is the exchange ending.",
-    "A plausible next line is enough; a gap is also fine. 0 means this exchange can end, not that the world is forbidden to talk.",
-    "Prefer a speaker if anyone has a line. 0 still means the exchange can end.",
-    "Do not offer 0. Pick the best candidate.",
+  followerChattiness: [
+    "Comments while traveling and starting a new conversation should be rare. Do not pick a follower just because they are standing there.",
+    "A follower may occasionally ask the player a question, start a conversation, or comment on the road, without a crisis in the log.",
+    "Followers may speak now and then when they are not cutting into a conversation between the player and a townsperson.",
+    "Followers often start talk or comment while traveling. That is not permission to cut in on the player talking to a townsperson.",
+    "Followers may speak freely when they are not interrupting the player and a townsperson. Lines like rain not letting up, or wanting a sweetroll, are allowed.",
   ],
-  room: [
-    "Bystanders do not comment on other people's talk.",
-    "A bystander may speak only if they were named or Interjection is a hard hit.",
-    "A bystander may react to a loud public scene if Interjection fits.",
-    "Public scenes invite a nearby reaction. Pick the bystander whose Interjection fits best.",
-    "The room may pile on. Pick the bystander whose Interjection fits hardest. Still one speaker this tick.",
+  nonFollowerInterruption: [
+    "Bystanders stay on the candidate list. The person you are talking to is not a bystander and can still be picked. Do not pick a bystander as speaker. Interjection does not override this.",
+    "Pick a bystander only if they were addressed or referred to by name, their job would actually demand a response in this exchange, or the Interjection list names a specific person who was just talked about. Topic triggers do not count yet.",
+    "Everything in Low still counts, plus the full Interjection list, plus warn, object, de-escalate, or escalate when the log shows a real conflict they have a job or Interjection reason to enter.",
+    "Everything in Medium still counts, plus the one-line summary and long personality paragraph giving a reason to cut in on this last line. Still not because they are nearby, and still not because the player has not answered yet.",
+  ],
+  nonFollowerChattiness: [
+    "Idle comments from townspeople should be rare. If someone was just addressed, they may still answer. Do not pick a third person to cut in.",
+    "A townsperson may continue after GameMaster started a line, or answer someone who just spoke to them. Do not pick someone who is not already in that conversation unless the interruption slider allows it.",
+    "Townspeople may speak freely when they are not cutting into a conversation they are not already in. Still one speaker. The person who just spoke cannot speak again.",
   ],
 };
 
 const DEFAULTS = {
-  interruption: 2,
-  world: 2,
-  room: 1,
-  yieldAfterQuestion: true,
-  scene: "your-turn",
+  followerInterruption: 1,
+  followerChattiness: 2,
+  nonFollowerInterruption: 1,
+  nonFollowerChattiness: 1,
+  scene: "player-and-townsperson",
   preview: false,
   theme: "dark",
 };
@@ -136,25 +140,26 @@ const NEARBY = [
 ];
 
 const SCENES = {
-  "your-turn": {
-    label: "Hulda just answered you",
-    job: "Your turn",
+  "player-and-townsperson": {
     lastSpeaker: "Hulda",
     lastTarget: "player",
     lastLine: "**Last exchange:** Hulda was speaking to player",
+    zeroMeans:
+      "No NPC speaks, so the player can answer. Hulda just spoke to the player.",
     log: [
       "- [8:41 PM] (dialogue) Player to Hulda: Which way to Dragonsreach from here? I just rode in.",
       "- [8:42 PM] (dialogue) Hulda to Player: Up the steps through the Wind District, love. Can't miss the keep. Need a room first, or are you heading straight up?",
     ],
     summary:
       "The player is at the bar. Hulda just answered a directions question and asked a follow-up. Olfina is serving with a tankard in hand. Jon sits two stools down. Nazeem stands near the door. Saadia is collecting mugs. No combat. Indoor evening crowd, not a brawl.",
+    sliders: ["followerInterruption", "nonFollowerInterruption"],
   },
-  "room-continues": {
-    label: "Olfina is roasting Jon",
-    job: "Room continues",
+  "two-npcs-talking": {
     lastSpeaker: "Olfina Gray-Mane",
     lastTarget: "Jon Battle-Born",
     lastLine: "**Last exchange:** Olfina Gray-Mane was speaking to Jon Battle-Born",
+    zeroMeans:
+      "This exchange between these two NPCs can end. Do not treat 0 as waiting for the player; the player was not addressed.",
     log: [
       "- [8:38 PM] (gamemaster_dialogue) GameMaster: Olfina Gray-Mane leans on the bar and cuts a look at Jon Battle-Born as he fumbles a verse.",
       "- [8:39 PM] (dialogue) Olfina Gray-Mane to Jon Battle-Born: If that's a love poem, Battle-Born, the horse you rode in on writes better.",
@@ -162,14 +167,14 @@ const SCENES = {
       "- [8:41 PM] (dialogue) Olfina Gray-Mane to Jon Battle-Born: Then stop reciting it in my inn. Some of us are working.",
     ],
     summary:
-      "GameMaster sparked an Olfina/Jon exchange. They are mid-roast at the bar. The player is nearby but was not addressed. Hulda is working. Nazeem is in earshot. Saadia is moving between tables.",
+      "GameMaster started an exchange between Olfina and Jon. They are mid-roast at the bar. The player is nearby but was not addressed. Hulda is working. Nazeem is in earshot. Saadia is moving between tables.",
+    sliders: ["nonFollowerChattiness", "nonFollowerInterruption"],
   },
   idle: {
-    label: "Idle tavern",
-    job: "Idle",
     lastSpeaker: null,
     lastTarget: null,
     lastLine: "**Last speaker:** none — no specific target",
+    zeroMeans: "Nobody needs to start talking.",
     log: [
       "- [8:20 PM] (dialogue) Hulda to Saadia: Another round for the corner table when you can.",
       "- [8:21 PM] (dialogue) Saadia to Hulda: Already moving.",
@@ -177,12 +182,33 @@ const SCENES = {
     ],
     summary:
       "The Bannered Mare is open and occupied. No one just addressed the player. No NPC-to-NPC exchange is mid-sentence. Tankards, fire, low talk.",
+    sliders: ["followerChattiness", "nonFollowerChattiness"],
   },
+};
+
+const SLIDER_TITLES = {
+  followerInterruption: "Follower interruption",
+  followerChattiness: "Follower chattiness",
+  nonFollowerInterruption: "Non-follower interruption",
+  nonFollowerChattiness: "Non-follower chattiness",
 };
 
 function load() {
   try {
-    return { ...DEFAULTS, ...JSON.parse(localStorage.getItem(KEY) || "{}") };
+    const raw = JSON.parse(localStorage.getItem(KEY) || "{}");
+    let scene = raw.scene;
+    if (scene === "your-turn") scene = "player-and-townsperson";
+    if (scene === "room-continues") scene = "two-npcs-talking";
+    return {
+      ...DEFAULTS,
+      followerInterruption: raw.followerInterruption ?? DEFAULTS.followerInterruption,
+      followerChattiness: raw.followerChattiness ?? DEFAULTS.followerChattiness,
+      nonFollowerInterruption: raw.nonFollowerInterruption ?? DEFAULTS.nonFollowerInterruption,
+      nonFollowerChattiness: raw.nonFollowerChattiness ?? DEFAULTS.nonFollowerChattiness,
+      scene: SCENES[scene] ? scene : DEFAULTS.scene,
+      preview: !!raw.preview,
+      theme: raw.theme || DEFAULTS.theme,
+    };
   } catch {
     return { ...DEFAULTS };
   }
@@ -192,52 +218,12 @@ function save(state) {
   localStorage.setItem(KEY, JSON.stringify(state));
 }
 
-function omitZero(state) {
-  return state.scene === "idle" && state.world === 4;
-}
-
-function jobZero(state) {
-  if (state.scene === "your-turn") {
-    return "Wait for the player. Do not mention stale loops or nobody having a line.";
-  }
-  if (state.scene === "room-continues") {
-    return "This exchange can end. Do not mention yielding to the player.";
-  }
-  if (omitZero(state)) {
-    return null;
-  }
-  return "Nobody needs a line this tick.";
-}
-
-function tastePackets(state) {
-  const out = [];
-  if (state.scene === "your-turn") {
-    out.push({
-      label: "Follower interruption — " + NOTCHES.interruption[state.interruption],
-      text: PACKETS.interruption[state.interruption],
-    });
-    if (state.yieldAfterQuestion) {
-      out.push({
-        label: "Yield after a question to you — On",
-        text: "The last line was aimed at the player. Output 0. Wait.",
-      });
-    }
-  } else if (state.scene === "room-continues") {
-    out.push({
-      label: "Let the world continue — " + NOTCHES.world[state.world],
-      text: PACKETS.world[state.world],
-    });
-    out.push({
-      label: "Room reaction — " + NOTCHES.room[state.room],
-      text: PACKETS.room[state.room],
-    });
-  } else {
-    out.push({
-      label: "Let the world continue — " + NOTCHES.world[state.world],
-      text: PACKETS.world[state.world],
-    });
-  }
-  return out;
+function instructionParagraphsForThisPrompt(state) {
+  const scene = SCENES[state.scene];
+  return scene.sliders.map((key) => ({
+    label: SLIDER_TITLES[key] + " — " + SLIDER_LABELS[key][state[key]],
+    text: INSTRUCTION_PARAGRAPHS[key][state[key]],
+  }));
 }
 
 function candidateHtml() {
@@ -249,52 +235,38 @@ function candidateHtml() {
   }).join("\n");
 }
 
-function compileLetterHTML(state) {
+function compilePromptPreviewHTML(state) {
   const scene = SCENES[state.scene];
-  const zero = jobZero(state);
-  const packets = tastePackets(state);
-  const allowZero = !omitZero(state);
-  const formatZero = allowZero
-    ? "- `0` = " + zero
-    : "- `0` is not offered this tick.";
-  const outputLine = allowZero
-    ? "Output format: `0` or `[Name]>[target]`"
-    : "Output format: `[Name]>[target]`";
+  const paragraphs = instructionParagraphsForThisPrompt(state);
   const lastSpeakerRule = scene.lastSpeaker
     ? `Do NOT select ${scene.lastSpeaker} as speaker (they just spoke — they CAN be a target).`
-    : "No last speaker lock this tick.";
+    : "No last speaker to exclude; nobody just spoke.";
 
-  const packetBlocks = packets
+  const paragraphBlocks = paragraphs
     .map(
       (p) =>
-        `<div class="pkt"><div class="pkt-label">${p.label}</div><div>${p.text}</div></div>`
+        `<div class="instruction-paragraph"><div class="instruction-label">${p.label}</div><div>${p.text}</div></div>`
     )
     .join("");
 
-  return `<div class="letter-doc">
-<div class="letter-tag">[ system ]</div>
+  return `<div class="prompt-doc">
+<div class="prompt-tag">[ system ]</div>
 # Task
-Select which NPC should speak next, if anyone. Output only ${
-    allowZero ? "`0` or " : ""
-  }\`[speaker]>[target]\`
+Select which NPC should speak next, if anyone. Output only \`0\` or \`[speaker]>[target]\`
 
 ## Output Format
-${formatZero}
+- \`0\` = ${scene.zeroMeans}
 - \`Lydia>player\` = Lydia speaks to player
 - \`Ulfric Stormcloak>Galmar Stone-Fist\` = Ulfric speaks to Galmar
 
-<div class="pkt">
-<div class="pkt-label">This tick's job — ${scene.job}</div>
-<div>${
-    zero
-      ? "0 means: " + zero
-      : "Do not mention 0. Someone should speak."
-  }</div>
+<div class="instruction-paragraph">
+<div class="instruction-label">What 0 means this time</div>
+<div>${scene.zeroMeans}</div>
 </div>
 
-## Taste
-Only the packet below is in this letter. Other notches were deleted before send.
-${packetBlocks}
+## Instructions kept for this processing of the prompt
+Jinja would delete every other slider position before send. The model only sees the paragraphs below.
+${paragraphBlocks}
 
 ## Scene Information
 ## Current Location
@@ -313,7 +285,7 @@ ${NEARBY.join("\n")}
 ## Scene Summary
 ${scene.summary}
 
-<div class="letter-tag">[ user ]</div>
+<div class="prompt-tag">[ user ]</div>
 ## Location
 The Bannered Mare, Whiterun
 
@@ -325,7 +297,7 @@ ${scene.lastLine}
 ${candidateHtml()}
 
 **Tag meanings:**
-- \`[COMPANION]\` — Player's active follower. More invested in the player's affairs. This tag is a fact, not a reason to speak. Interjection and the taste packet decide that.
+- \`[COMPANION]\` — Player's active follower. More invested in the player's affairs. This tag is a fact, not a reason to speak. Interjection and the kept instruction paragraphs decide that.
 
 **Targeting rules:**
 - Consider who was just speaking to whom. ${
@@ -334,30 +306,29 @@ ${candidateHtml()}
       : "No current exchange."
   }
 - Only use \`player\` as target when the NPC is genuinely addressing the player.
-- Always specify a target — every output must be exactly ${
-    allowZero ? "`0` or " : ""
-  }\`[speaker]>[target]\`.
+- Always specify a target — every output must be exactly \`0\` or \`[speaker]>[target]\`.
 - ${lastSpeakerRule}
 
 ### Examples
 - CORRECT: \`Aela the Huntress>Lydia\`
-${allowZero ? "- CORRECT: `0`\n" : ""}- INCORRECT: \`Aela the Huntress [Female Nord]>Lydia\` (do not add gender and race)
+- CORRECT: \`0\`
+- INCORRECT: \`Aela the Huntress [Female Nord]>Lydia\` (do not add gender and race)
 - INCORRECT: \`Aela>Lydia\` (use exact full name, not shortened)
 - INCORRECT: \`Aela>{{ player.name }}\` (target player as lowercase "player")
 
 IMPORTANT: ${lastSpeakerRule}
-${outputLine}
-<div class="letter-tag">[ end user ]</div>
+Output format: \`0\` or \`[Name]>[target]\`
+<div class="prompt-tag">[ end user ]</div>
 </div>`;
 }
 
-function renderTicks(el, key, state) {
-  const labels = NOTCHES[key];
+function renderSliderPositions(el, key, state) {
+  const labels = SLIDER_LABELS[key];
   el.innerHTML = "";
   labels.forEach((label, i) => {
     const btn = document.createElement("button");
     btn.type = "button";
-    btn.className = "tick" + (state[key] === i ? " is-on" : "");
+    btn.className = "slider-position" + (state[key] === i ? " is-on" : "");
     btn.textContent = label;
     btn.addEventListener("click", () => {
       state[key] = i;
@@ -375,28 +346,25 @@ function applyTheme(theme) {
 function paint(state) {
   applyTheme(state.theme);
   document.body.classList.toggle("is-preview", !!state.preview);
-  document.querySelectorAll("[data-notches]").forEach((el) => {
-    renderTicks(el, el.getAttribute("data-notches"), state);
+  document.querySelectorAll("[data-slider]").forEach((el) => {
+    renderSliderPositions(el, el.getAttribute("data-slider"), state);
   });
   document.querySelectorAll("[data-hint]").forEach((el) => {
     const key = el.getAttribute("data-hint");
     el.textContent = HINTS[key][state[key]];
   });
-  document.querySelectorAll("[data-yield-hint]").forEach((el) => {
-    el.textContent = YIELD_HINTS[state.yieldAfterQuestion];
-  });
-  document.querySelectorAll("[data-toggle=yield]").forEach((el) => {
-    el.classList.toggle("is-on", state.yieldAfterQuestion);
-    el.setAttribute("aria-pressed", state.yieldAfterQuestion ? "true" : "false");
-  });
-  document.querySelectorAll("[data-yield-label]").forEach((el) => {
-    el.textContent = state.yieldAfterQuestion ? "On" : "Off";
+  document.querySelectorAll("[data-value]").forEach((el) => {
+    const key = el.getAttribute("data-value");
+    const labels = SLIDER_LABELS[key];
+    if (labels) el.textContent = labels[state[key]];
   });
   document.querySelectorAll("[data-toggle=preview]").forEach((el) => {
     el.classList.toggle("is-on", !!state.preview);
     el.setAttribute("aria-pressed", state.preview ? "true" : "false");
     if (el.dataset.labelToggle !== undefined) {
-      el.textContent = state.preview ? "Hide letter preview" : "Show letter preview";
+      el.textContent = state.preview
+        ? "Hide selector prompt preview"
+        : "Show selector prompt preview";
     }
   });
   document.querySelectorAll("[data-theme-set]").forEach((el) => {
@@ -406,8 +374,8 @@ function paint(state) {
     const id = el.getAttribute("data-scene");
     el.classList.toggle("is-on", state.scene === id);
   });
-  const letter = document.querySelector("[data-letter]");
-  if (letter) letter.innerHTML = compileLetterHTML(state);
+  const preview = document.querySelector("[data-preview]");
+  if (preview) preview.innerHTML = compilePromptPreviewHTML(state);
 }
 
 function boot() {
@@ -415,13 +383,6 @@ function boot() {
   if (document.body.hasAttribute("data-force-preview")) {
     state.preview = true;
   }
-  document.querySelectorAll("[data-toggle=yield]").forEach((el) => {
-    el.addEventListener("click", () => {
-      state.yieldAfterQuestion = !state.yieldAfterQuestion;
-      save(state);
-      paint(state);
-    });
-  });
   document.querySelectorAll("[data-toggle=preview]").forEach((el) => {
     el.addEventListener("click", () => {
       state.preview = !state.preview;
