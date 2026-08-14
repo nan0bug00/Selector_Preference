@@ -322,6 +322,8 @@ input {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
   margin-top: 14px;
   padding-top: 12px;
   border-top: 1px solid var(--border);
@@ -479,6 +481,63 @@ kbd {
   margin: 0 auto;
 }
 
+.layout-chosen .overlay-root {
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-end;
+  gap: 16px;
+  padding: 48px 40px 40px;
+}
+
+.layout-chosen .controls {
+  width: min(420px, 100%);
+  flex-shrink: 0;
+}
+
+.layout-chosen .letter-panel {
+  display: none;
+  flex: 1;
+  min-width: 0;
+  max-height: calc(100vh - 110px);
+  flex-direction: column;
+}
+
+.layout-chosen.is-preview .overlay-root {
+  justify-content: stretch;
+  align-items: stretch;
+  padding: 20px;
+}
+
+.layout-chosen.is-preview .letter-panel {
+  display: flex;
+}
+
+.layout-chosen .letter-scroll {
+  overflow: auto;
+  flex: 1;
+  min-height: 0;
+  padding: 0 18px 18px;
+}
+
+.btn-preview {
+  appearance: none;
+  border: 1px solid var(--border);
+  background: var(--bg-input);
+  color: var(--text-secondary);
+  border-radius: 999px;
+  min-height: 32px;
+  padding: 0 12px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.btn-preview:hover,
+.btn-preview.is-on {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-muted);
+}
+
 .letter {
   padding: 16px 18px;
   background: #141418;
@@ -488,7 +547,36 @@ kbd {
   font-size: 13px;
   line-height: 1.55;
   color: #c8c4bb;
+}
+
+.letter-doc {
+  margin: 0;
   white-space: pre-wrap;
+}
+
+.letter-tag {
+  color: var(--text-muted);
+  letter-spacing: 0.04em;
+  text-transform: lowercase;
+}
+
+.pkt {
+  white-space: normal;
+  margin: 10px 0;
+  padding: 8px 10px;
+  background: var(--accent-muted);
+  border-left: 3px solid var(--accent);
+  border-radius: 0 var(--radius) var(--radius) 0;
+  color: var(--text-primary);
+}
+
+.pkt-label {
+  color: var(--accent);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  margin-bottom: 4px;
 }
 
 .letter .job {
@@ -543,8 +631,15 @@ kbd {
     grid-template-columns: 1fr;
   }
 
-  .layout-compact .overlay-root {
+  .layout-compact .overlay-root,
+  .layout-chosen .overlay-root,
+  .layout-chosen.is-preview .overlay-root {
     justify-content: center;
     padding: 24px 12px;
+    flex-direction: column;
+  }
+
+  .layout-chosen.is-preview .letter-panel {
+    max-height: none;
   }
 }

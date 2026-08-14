@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Mockup 1 — Compact card</title>
+  <title>Working draft — Compact + letter preview</title>
   <link rel="stylesheet" href="assets/overlay.css">
 </head>
-<body class="layout-compact">
+<body class="layout-chosen">
   <div class="stage">
     <div class="mock-bar"></div>
     <div class="mock-stool"></div>
@@ -14,7 +14,7 @@
     <div class="mock-stool"></div>
     <div class="mock-stool"></div>
     <header class="chrome">
-      <div class="chrome-title"><strong>1 / 5</strong> Compact card — testing overlay, not a dashboard</div>
+      <div class="chrome-title"><strong>Working draft</strong> Compact card by default. Letter preview is a toggle for testing.</div>
       <nav>
         <a href="index.html">Index</a>
         <a class="is-current" href="1.html">1 Card</a>
@@ -25,7 +25,7 @@
       </nav>
     </header>
     <div class="overlay-root">
-      <aside class="panel">
+      <aside class="panel controls">
         <div class="panel-head">
           <div>
             <h1>Selector Preference</h1>
@@ -63,13 +63,32 @@
               <h2>Yield after a question to you</h2>
               <p class="hint">Almost always leave this on.</p>
             </div>
-            <div>
-              <button class="toggle" type="button" data-toggle="yield" aria-pressed="true"></button>
-            </div>
+            <button class="toggle" type="button" data-toggle="yield" aria-pressed="true"></button>
           </div>
-          <div class="hotkey">Hotkey <kbd>F7</kbd> · rebind in MCM</div>
+          <div class="hotkey">
+            <span>Hotkey <kbd>F7</kbd> · rebind in MCM</span>
+            <button class="btn-preview" type="button" data-toggle="preview" data-label-toggle>Show letter preview</button>
+          </div>
         </div>
       </aside>
+      <section class="panel letter-panel">
+        <div class="panel-head">
+          <div>
+            <h1>Compiled letter</h1>
+            <p class="sub">Gold blocks are this plugin. The rest is the kind of thing SkyrimNet already injects. Example scene, not live game data.</p>
+          </div>
+        </div>
+        <div class="panel-body" style="padding-bottom: 8px;">
+          <div class="scene-pick">
+            <button class="tick" type="button" data-scene="your-turn">Hulda answered you</button>
+            <button class="tick" type="button" data-scene="room-continues">Olfina roasting Jon</button>
+            <button class="tick" type="button" data-scene="idle">Idle tavern</button>
+          </div>
+        </div>
+        <div class="letter-scroll">
+          <div class="letter" data-letter></div>
+        </div>
+      </section>
     </div>
   </div>
   <script src="assets/overlay.js"></script>
