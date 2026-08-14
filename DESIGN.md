@@ -19,7 +19,7 @@ Taste is not a prompt-engineering problem. The wiki author’s “companions ste
 
 ## What we are building
 
-1. **A Papyrus + MCM plugin** that publishes slider positions (and optionally dice) as Inja decorators, the same way `lastSpeaker.name` already works.
+1. **A plugin** that publishes slider positions (and optionally dice) as Inja decorators, the same way `lastSpeaker.name` already works. Two doors into the same settings (fast PrismaUI overlay, slow MCM backup). One file on disk is the room; both doors read and write it.
 2. **One selector `.prompt` file** that still contains every packet (the binder). Jinja deletes every packet that does not apply. Meta never reads the binder.
 
 Two scissors:
@@ -62,6 +62,19 @@ Suggested first MCM page:
 4. Optional: **Yield after a question to you** — almost always on.
 
 Dice are optional later (same notch, this beat flickers). First version can be sticky packets only.
+
+## Two doors, one room
+
+Settings live in **one** file (JSON or equivalent). The selector decorator reads that file. The PrismaUI overlay and the MCM both read and write that file. Neither menu owns a private copy.
+
+Rules:
+
+- Add a slider once, in the shared list. Then both menus show it. Never add a control to only one door.
+- Change a notch in either menu, the other shows the new value the next time it opens (and the next selector letter uses it immediately).
+- Change how a notch behaves (rename, extra packet, different meaning of `0`), change the packets and the labels in both menus in the same change.
+- The overlay hotkey can be rebound in MCM. That is still one setting, not a second system.
+
+The overlay is the door we will actually use while testing. MCM exists so a full keyboard is not required. F6 SkyrimNet dashboard is not a door; we do not inject into their config.
 
 ## Ceiling (public API)
 
