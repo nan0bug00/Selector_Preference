@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mockup 4 — Letter preview</title>
+  <link rel="stylesheet" href="assets/overlay.css">
+</head>
+<body class="layout-letter">
+  <div class="stage">
+    <div class="mock-bar"></div>
+    <div class="mock-stool"></div>
+    <div class="mock-stool"></div>
+    <div class="mock-stool"></div>
+    <div class="mock-stool"></div>
+    <header class="chrome">
+      <div class="chrome-title"><strong>4 / 5</strong> Letter preview — what meta would see this tick</div>
+      <nav>
+        <a href="index.html">Index</a>
+        <a href="1.html">1 Card</a>
+        <a href="2.html">2 Words</a>
+        <a href="3.html">3 Columns</a>
+        <a class="is-current" href="4.html">4 Letter</a>
+        <a href="5.html">5 HUD</a>
+      </nav>
+    </header>
+    <div class="overlay-root">
+      <aside class="panel">
+        <div class="panel-head">
+          <div>
+            <h1>Taste</h1>
+            <p class="sub">Change a notch. The letter on the right is the compile, not a second settings copy.</p>
+          </div>
+        </div>
+        <div class="panel-body">
+          <div class="setting">
+            <h2>Pretend this just happened</h2>
+            <div class="scene-pick">
+              <button class="tick" type="button" data-scene="your-turn">Hulda answered you</button>
+              <button class="tick" type="button" data-scene="room-continues">Olfina roasting Jon</button>
+              <button class="tick" type="button" data-scene="idle">Idle tavern</button>
+            </div>
+          </div>
+          <div class="setting">
+            <div class="setting-label">
+              <h2>Follower interruption</h2>
+              <span class="setting-value" data-value="interruption"></span>
+            </div>
+            <div class="notch-track" data-notches="interruption"></div>
+          </div>
+          <div class="setting">
+            <div class="setting-label">
+              <h2>Let the world continue</h2>
+              <span class="setting-value" data-value="world"></span>
+            </div>
+            <div class="notch-track" data-notches="world"></div>
+          </div>
+          <div class="setting">
+            <div class="setting-label">
+              <h2>Room reaction</h2>
+              <span class="setting-value" data-value="room"></span>
+            </div>
+            <div class="notch-track" data-notches="room"></div>
+          </div>
+          <div class="setting toggle-row">
+            <h2>Yield after a question</h2>
+            <button class="toggle" type="button" data-toggle="yield" aria-pressed="true"></button>
+          </div>
+        </div>
+      </aside>
+      <section class="panel">
+        <div class="panel-head">
+          <div>
+            <h1>Compiled letter</h1>
+            <p class="sub">SkyrimNet still injects candidates, bios, Interjection, and the log. This mock only shows job + 0 + taste.</p>
+          </div>
+        </div>
+        <div class="panel-body">
+          <pre class="letter" data-letter></pre>
+        </div>
+      </section>
+    </div>
+  </div>
+  <script src="assets/overlay.js"></script>
+</body>
+</html>

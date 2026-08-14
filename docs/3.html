@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mockup 3 — Situation columns</title>
+  <link rel="stylesheet" href="assets/overlay.css">
+</head>
+<body class="layout-columns">
+  <div class="stage">
+    <div class="mock-bar"></div>
+    <div class="mock-stool"></div>
+    <div class="mock-stool"></div>
+    <div class="mock-stool"></div>
+    <div class="mock-stool"></div>
+    <header class="chrome">
+      <div class="chrome-title"><strong>3 / 5</strong> Situation columns — three jobs, one settings file</div>
+      <nav>
+        <a href="index.html">Index</a>
+        <a href="1.html">1 Card</a>
+        <a href="2.html">2 Words</a>
+        <a class="is-current" href="3.html">3 Columns</a>
+        <a href="4.html">4 Letter</a>
+        <a href="5.html">5 HUD</a>
+      </nav>
+    </header>
+    <div class="overlay-root">
+      <div class="panel">
+        <div class="panel-head">
+          <div>
+            <h1>Selector Preference</h1>
+            <p class="sub">Situation is scissors from last speaker / last target. Preference is which packet each column is allowed to use.</p>
+          </div>
+          <button class="close-x" type="button" aria-label="Close">×</button>
+        </div>
+        <div class="panel-body">
+          <div class="cols">
+            <section class="col">
+              <h2>Your turn</h2>
+              <p class="zero">0 = wait for the player. Last line was aimed at you.</p>
+              <div class="setting">
+                <div class="setting-label">
+                  <h2>Follower interruption</h2>
+                  <span class="setting-value" data-value="interruption"></span>
+                </div>
+                <div class="notch-track" data-notches="interruption"></div>
+              </div>
+              <div class="setting toggle-row">
+                <div>
+                  <h2>Yield after a question</h2>
+                  <span class="setting-value" data-yield-label></span>
+                </div>
+                <button class="toggle" type="button" data-toggle="yield" aria-pressed="true"></button>
+              </div>
+            </section>
+            <section class="col">
+              <h2>Room continues</h2>
+              <p class="zero">0 = this exchange can end. Do not mention yielding.</p>
+              <div class="setting">
+                <div class="setting-label">
+                  <h2>Let the world continue</h2>
+                  <span class="setting-value" data-value="world"></span>
+                </div>
+                <div class="notch-track" data-notches="world"></div>
+              </div>
+              <div class="setting">
+                <div class="setting-label">
+                  <h2>Room reaction</h2>
+                  <span class="setting-value" data-value="room"></span>
+                </div>
+                <div class="notch-track" data-notches="room"></div>
+              </div>
+            </section>
+            <section class="col">
+              <h2>Idle</h2>
+              <p class="zero">0 = nobody needs a line. High keep-talking may omit 0.</p>
+              <div class="setting">
+                <div class="setting-label">
+                  <h2>Let the world continue</h2>
+                  <span class="setting-value" data-value="world"></span>
+                </div>
+                <div class="notch-track" data-notches="world"></div>
+                <p class="hint">Same slider as the middle column. One room, two doors, one file — this row is shown twice on purpose so you can see it feed both jobs.</p>
+              </div>
+            </section>
+          </div>
+          <div class="hotkey">Hotkey <kbd>F7</kbd> · rebind in MCM</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script src="assets/overlay.js"></script>
+</body>
+</html>
