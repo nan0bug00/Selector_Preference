@@ -1,7 +1,10 @@
 Thumbs.db
 Desktop.ini
+opencode.json
 .DS_Store
 *.bak
 *.tmp
 .vscode/
 .idea/
+.opencode/
+.cursor/

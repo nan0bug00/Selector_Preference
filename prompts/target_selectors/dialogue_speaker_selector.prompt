@@ -4,7 +4,7 @@
 {% set tagCompanion = ss.tagCompanion %}
 {% set tagEngaged = ss.tagEngaged %}
 {% set tagInScene = ss.tagInScene %}
-{% set companionInterruption = ss.companionInterrupt %}
+{% set companionInterruption = get_global_value("SP_CompanionInterrupt") %}
 
 {% set playerWasAddressed = existsIn(lastDialogueTarget, "name") and lastDialogueTarget.UUID == player.UUID %}
 {% set companionSectionShown = existsIn(lastSpeaker, "name") and existsIn(lastDialogueTarget, "name") and ((lastSpeaker.UUID == player.UUID and lastDialogueTarget.UUID != player.UUID and not is_follower(lastDialogueTarget.UUID)) or (lastSpeaker.UUID != player.UUID and lastDialogueTarget.UUID == player.UUID and not is_follower(lastSpeaker.UUID))) %}
