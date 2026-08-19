@@ -4,8 +4,6 @@
 {% set tagCompanion = ss.tagCompanion %}
 {% set tagEngaged = ss.tagEngaged %}
 {% set tagInScene = ss.tagInScene %}
-
-{# PLACEHOLDER: future companion-interruption setting field, integer 1 through 5 #}
 {% set companionInterruption = ss.companionInterrupt %}
 
 {% set playerWasAddressed = existsIn(lastDialogueTarget, "name") and lastDialogueTarget.UUID == player.UUID %}
