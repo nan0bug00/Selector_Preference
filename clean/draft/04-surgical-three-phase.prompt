@@ -1,0 +1,161 @@
+{# DRAFT 4 — conservative repair of the three-phase selector
+   Intent: preserve broad reaction selection, but use Jinja-selected interruption
+   guidance instead of one standing companion rule.
+   PLACEHOLDERS: followerInterruption and nonFollowerInterruption are proposed
+   integer settings. Replace these field names with the actual decorators.
+#}
+[ system ]
+{% set ss = get_speaker_selector_settings() %}
+{% set zerochance = ss.silenceChancePercent %}
+{% set followerInterruption = default(ss.followerInterruption, 3) %}
+{% set nonFollowerInterruption = default(ss.nonFollowerInterruption, 2) %}
+{% set tagEngaged = ss.tagEngaged %}
+{% set tagInScene = ss.tagInScene %}
+
+{% set hasExchange = existsIn(lastSpeaker, "name") and existsIn(lastDialogueTarget, "name") %}
+{% set playerSpoke = hasExchange and lastSpeaker.UUID == player.UUID %}
+{% set playerWasAddressed = hasExchange and lastDialogueTarget.UUID == player.UUID %}
+{% set silenceAllowed = playerWasAddressed or random < zerochance %}
+{% set playerNonFollowerExchange = false %}
+{% if playerSpoke and not is_follower(lastDialogueTarget.UUID) %}
+{% set playerNonFollowerExchange = true %}
+{% elif playerWasAddressed and not is_follower(lastSpeaker.UUID) %}
+{% set playerNonFollowerExchange = true %}
+{% endif %}
+
+# Task
+
+An NPC has completed a line to a recipient. Select the next NPC reaction, if any.
+
+Output only {% if silenceAllowed %}`0` or {% endif %}`[exact speaker name]>[exact target]`.
+
+{% if silenceAllowed %}
+`0` means no NPC speaks on this call.
+{% endif %}
+
+# Phase 1 — protect the player's turn
+
+{% if playerWasAddressed %}
+{{ lastSpeaker.name }} spoke to the player. `0` is always available so the player can answer.
+
+The player does not make every other candidate ineligible. A candidate may still react when the applicable interruption setting below permits it and the completed line or recent context gives that candidate a specific reason.
+{% endif %}
+
+{% if playerNonFollowerExchange %}
+## Followers entering this player and non-follower exchange
+
+{% if followerInterruption == 1 %}
+Do not select a follower. This is a hard prohibition.
+{% elif followerInterruption == 2 %}
+Strongly preserve the current exchange. Select a follower only for an unusually specific reaction to what was just said or done; follower status, presence, and a general interest in the topic are insufficient.
+{% elif followerInterruption == 3 %}
+Preserve the current exchange unless a follower has a clear character-specific reason to react now. Their Interjection guidance, role, direct involvement, and the recent dialogue may support that judgment.
+{% elif followerInterruption == 4 %}
+Allow a follower to enter when the completed line or recent context gives them a specific, natural contribution. The reason need not be exceptional, but it must concern this exchange.
+{% else %}
+Do not apply an interruption penalty to followers. Judge them by the same reaction criteria as other candidates, while still requiring a reason connected to the current exchange.
+{% endif %}
+{% endif %}
+
+{% if hasExchange %}
+## Non-followers who are not already part of this exchange
+
+{% if nonFollowerInterruption == 1 %}
+Do not select an unrelated non-follower. This is a hard prohibition.
+{% elif nonFollowerInterruption == 2 %}
+Strongly preserve the current exchange. Select an unrelated non-follower only for an unusually specific reaction to what was just said or done; presence and general topical interest are insufficient.
+{% elif nonFollowerInterruption == 3 %}
+Allow an unrelated non-follower when their role, direct involvement, Interjection guidance, or the recent dialogue gives them a clear character-specific reason to react now.
+{% else %}
+Allow an unrelated non-follower whenever the completed line or recent context gives them a specific, natural contribution. Presence alone remains insufficient.
+{% endif %}
+{% endif %}
+
+# Phase 2 — decide whether the reaction chain ends
+
+{% if silenceAllowed %}
+Choose `0` when the exchange has naturally closed, the recipient does not need to answer, and no permitted candidate has a timely reaction.
+
+Examples of a natural close include a farewell, completed transaction, resolved question, acknowledgment, agreement, thanks, or repeated dialogue that is no longer advancing.
+{% endif %}
+
+Do not select an NPC to comment on silence, urge the player to speak, or narrate waiting.
+
+# Phase 3 — select the best reaction
+
+Consider every candidate who is not prohibited above. The following are useful evidence, not an exhaustive permission list:
+
+1. The candidate was addressed, named, or explicitly invited into the exchange.
+2. The candidate is the person expected to answer an unresolved line.
+3. The candidate's role calls for a response to this specific exchange.
+4. The candidate's Interjection guidance applies to the completed line or recent context.
+5. The candidate's short profile and the recent dialogue support a specific reaction that belongs now rather than a new conversation.
+
+The addressed NPC is the natural responder, but not the only possible speaker. Compare the specificity and immediacy of the candidates' reasons. Do not select someone merely because they are nearby or because a generic line could be written for them.
+
+Never select {{ lastSpeaker.name }}. That person just spoke.
+
+# Virtual NPC restrictions
+
+- A regular NPC cannot hear or answer a Virtual NPC.
+- A regular NPC cannot target a Virtual NPC.
+- A Virtual NPC may target another Virtual NPC.
+
+{{ get_scene_context(0, 0, "full") }}
+[ end system ]
+
+[ user ]
+# Location
+
+{{ location }}
+
+# Recent Dialogue
+
+{{ render_template("components\\event_history_compact") }}
+
+{% if hasExchange %}
+# Completed line
+
+**{{ lastSpeaker.name }} spoke to {{ lastDialogueTarget.name }}.**
+{% endif %}
+
+# Candidates
+
+{% for candidate in candidateDialogues %}
+{% if candidate.UUID and candidate.UUID != 0 %}
+{% set cinfo = decnpc(candidate.UUID) %}
+{{ candidate.id }}. **{{ cinfo.name }}**{% if hasExchange and candidate.UUID == lastDialogueTarget.UUID %} **[RECIPIENT]**{% endif %}{% if hasExchange and candidate.UUID == lastSpeaker.UUID %} **[PREVIOUS SPEAKER — DO NOT SELECT]**{% endif %}{% if not cinfo.isVirtual and is_follower(candidate.UUID) %} **[FOLLOWER]**{% endif %}{% if not cinfo.isVirtual and tagEngaged and is_in_package(candidate.UUID, "SkyrimNet_PlayerFollowPackage") %} **[ENGAGED]**{% endif %}{% if not cinfo.isVirtual and tagInScene and (is_in_faction(candidate.UUID, "SexLabAnimatingFaction") or is_in_faction(candidate.UUID, "OStimExcitementFaction")) %} **[IN SCENE]**{% endif %}{% if cinfo.isVirtual %} **[VIRTUAL NPC]**{% endif %}
+   - {% if not cinfo.isVirtual %}{{ cinfo.gender }} {{ cinfo.race }}, {{ units_to_meters(candidate.distance) }}m — {% endif %}{{ render_character_profile("short_inline", candidate.UUID) }}
+   - **Interjection:** {{ render_character_profile("interject_inline", candidate.UUID) }}
+{% if playerNonFollowerExchange and not cinfo.isVirtual and is_follower(candidate.UUID) and followerInterruption >= 4 %}
+   - **Personality:** {{ render_character_profile("bio_personality", candidate.UUID) }}
+{% elif hasExchange and not cinfo.isVirtual and not is_follower(candidate.UUID) and candidate.UUID != lastSpeaker.UUID and candidate.UUID != lastDialogueTarget.UUID and nonFollowerInterruption == 4 %}
+   - **Personality:** {{ render_character_profile("bio_personality", candidate.UUID) }}
+{% endif %}
+{% endif %}
+{% endfor %}
+
+`[ENGAGED]` may support conversational readiness but never overrides a prohibition. Strongly avoid `[IN SCENE]` unless directly addressed.
+
+# Targeting
+
+{% if playerSpoke %}
+- A responding `[RECIPIENT]` targets `player`.
+{% else %}
+- A responding `[RECIPIENT]` targets {{ lastSpeaker.name }}.
+{% endif %}
+- Another speaker targets the person they are specifically reacting to or addressing.
+- Use `player` in lowercase when the player is the target.
+- Otherwise use an exact full candidate name.
+- Always include one target.
+
+Valid: `Aela the Huntress>Lydia`
+{% if silenceAllowed %}
+
+Valid: `0`
+{% endif %}
+
+Do not add tags, formatting, explanation, or shortened names.
+
+Output:
+[ end user ]

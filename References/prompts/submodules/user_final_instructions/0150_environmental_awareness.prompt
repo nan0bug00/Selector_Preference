@@ -1,0 +1,3 @@
+{% if render_mode == "full" or render_mode == "thoughts" or render_mode == "transform" %}
+
+{% endif %}

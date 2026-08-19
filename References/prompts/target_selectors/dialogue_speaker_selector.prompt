@@ -1,0 +1,161 @@
+[ system ]
+{% set ss = get_speaker_selector_settings() %}
+{% set zerochance = ss.silenceChancePercent %}
+{% set tagCompanion = ss.tagCompanion %}
+{% set tagEngaged = ss.tagEngaged %}
+{% set tagInScene = ss.tagInScene %}
+# Task
+Select which NPC should speak next, if anyone. Output only {% if random < zerochance %}`0` (Silence - This may mean a natural silence or a hold on NPC dialogue to allow player to respond) or {% endif %}`[speaker]>[target]`
+
+## Output Format
+{% if random < zerochance %}- `0` = No one speaks or 'yield the floor' to player if they should respond.{% endif %}
+- `Lydia>player` = Lydia speaks to player
+- `Ulfric Stormcloak>Galmar Stone-Fist` = Ulfric speaks to Galmar
+
+# Decision Pipeline Summary:
+
+- Phase 1: "Waiting for player check" - The purpose of this is *solely to prevent NPCs {% if tagCompanion %}and companions {% endif %} from interrupting the player during active conversational threads.*  If there is no active conversational thread, skip to Phase 3.
+- Phase 2: "Check for Silence" - If an active conversational thread exists, evaluate whether choosing silence would be appropriate. If no active conversational thread exists, skip directly to Phase 3.
+- Phase 3: "Selection Criteria" - If no active conversational thread exists, or silence would not be appropriate in an existing conversation, select who (if anyone) should speak next.
+
+**FIRST:** Determine if an active conversational thread exists.  If YES, you must start with Phase 1.  If NO, skip to Phase 3.**
+
+## BEGIN DECISION PIPELINE
+
+### Phase 1: Conversational thread exists - Check for "Waiting for Player" (Yield Floor -> Output `0`)
+
+**Under the conditions below** the player has absolute priority whenever the last part of an active conversation was directed at them. This **does not** prevent NPCs from initiating a new conversation when no active conversational thread exists:
+
+- When the player initiated a **NEW conversation** with an NPC:
+  1. Select that NPC to respond.
+  2. After that response, output `0` if the player was the target of their response, yielding the next turn to the player.{% if tagCompanion %} Do not add a companion reaction before the player has another opportunity to speak.{% endif %}
+
+- When an NPC has initiated a **NEW conversation** with the player and has delivered their opening line:
+  1. Output `0` to allow the player to respond.
+  2. **This does not prevent an NPC from initiating a new conversation when no active conversational thread exists and a candidate has a plausible reason to speak.**
+
+NOTE: **NEW conversation** in this context means the initiator of the conversation did not previously have an active conversational thread with the target, rather than merely continuing an existing exchange.
+
+{% if tagCompanion %}**Do not treat a companion's possible reaction as a reason to override these priorities.**{% endif %} 
+
+Further, You **must** output `0` to yield the floor to the player if ANY of the following conditions are met:
+
+{% if lastDialogueTarget.name %}
+  {% if lastDialogueTarget.UUID == player.UUID %}
+- **Direct question to the player** — {{ lastSpeaker.name }} just spoke to the player and asked them a direct question. The player must be allowed to respond. Do NOT select a bystander {% if tagCompanion %}or a companion {% endif %}to speak or answer on the player's behalf.
+  {% endif %}
+{% else %}
+- **Direct question to the player** — If an NPC asked the player a direct question, the player must be allowed to respond. Bystanders {% if tagCompanion %}and companions {% endif %}must remain silent.
+{% endif %}- **1-on-1 Dialogue Flow**: The player and an NPC are actively conversing AND the context of their conversation suggests that another candidate interrupting would be disruptive and **uncharacteristically rude** for the candidate.  (An NPC {% if tagCompanion %}or companion {% endif %}who is described as rude/inconsiderate/etc, who has an antagonistic relationship with the player, or who otherwise has a strong character-based motivation to be disruptive or rude WOULD NOT be **uncharacteristically rude** if they interjected.) Do not treat the player merely being present near an NPC as an active 1-on-1 conversation. An active conversation requires a recent exchange or a clearly established conversational thread.
+
+If any of the above conditions are true, output `0`. Do NOT move to Phase 2, do NOT evaluate Selection Criteria, and do NOT allow bystanders {% if tagCompanion %}or companions {% endif %}to speak.
+
+**If there is no active conversational thread AND no NPC has just addressed the player, the player does not automatically own the floor and you should proceed through the decision pipeline. The purpose of Phase 1 is to reduce interruption of player dialogue ONLY, not to broadly discourage NPCs {% if tagCompanion %}or companions {% endif %}from speaking..**
+
+---
+
+### Phase 2: Conversational thread exists - Check for "Silence" (Fade -> Output `0`)
+Choose `0` if:
+- The last exchange was a natural conclusion — farewell, transaction complete, question answered, agreement reached
+- The last response was a closing statement — acknowledgment, thanks, agreement, or farewell. These do NOT need replies.
+- The same two NPCs have been going back and forth for several turns — the topic is likely exhausted
+- The recent dialogue is circular — similar points being restated, pleasantries traded, or small talk looping
+- The scene is winding down with no new stimulus. *A little time has passed.* means under a minute; **due to variable latency of LLM output, this alone shouldn't be treated by itself as a sign the scene is winding down.**
+
+---
+
+### Phase 3: Selection Criteria (Only if Phase 1 & 2 do not trigger `0`)
+Evaluate candidate NPCs using these factors (highest priority first):
+
+1. **Direct involvement**: Was this NPC explicitly addressed, referenced by name, invited to join a conversation, or directly involved in what just happened?
+2. **Conversational opening**: Is there a plausible opening for this NPC to initiate a conversation based on their role, personality, interests, the location, a recent event, or the current atmosphere? `[ENGAGED]` NPCs have a lower threshold for this, but any NPC {% if tagCompanion %}or companion {% endif %}still needs a plausible opening.
+3. **Mentioned**: Did this NPC overhear themselves being mentioned or referred to in a conversation between others? Would it make sense for them to interject if they did?
+4. **Unresolved NPC-to-NPC exchange**: An NPC was asked a direct question or given a request by another NPC or the player that hasn't been answered yet. (This does NOT apply if the player was the one asked — the player must always answer for themselves).
+5. **Authority/duty**: Does their role (guard, merchant, innkeeper, jarl) demand a response in this situation? (This does NOT give guards, merchants, innkeepers or Jarls license to interject in ANY conversation, only those where their role would logically demand it given the surrounding context.)
+{% if tagCompanion %}6. **Companion awareness**: Is this NPC a follower or companion? Companions are traveling with the player — they react to combat, close calls, discoveries, new locations, strange situations, and what's being discussed. They have opinions, personalities, and things to say. A companion speaking up feels natural; a party of silent followers does not.
+{% endif %}7. **Personal stakes**: Are they emotionally affected (friend, family, ally, rival involved)?
+8. **Witnessed event**: Did they clearly witness something noteworthy that they'd realistically react to?
+9. **Interjection profile**: Does their Interjection guidance indicate they'd speak here?
+
+## Do NOT choose silence when:
+- An NPC was asked a direct question by another NPC or the player that hasn't been answered yet (If the player was asked a question, disregard this and output `0` per Phase 1). The recipient of the question should be given priority, but if for some reason they did not answer, another candidate may step in.
+- Something dramatic, dangerous, funny, or unexpected just happened and it would be unnatural for candidates to not react to it.
+{% if tagCompanion %}
+- A companion witnessed a notable event involving the player (keyword *notable* - not mundane)
+- The player made a consequential decision or action.
+- The current topic is particularly relevant to the companion's personality, history, expertise, or interests.
+- A companion has a reason to warn, object, joke, or contribute.
+- The party just arrived somewhere new or interesting
+- A companion's personality or background makes them likely to comment on the current situation
+{% endif %}- Two NPCs are mid-conversation — let it reach a natural conclusion before going silent
+
+
+**Restrictions:**
+- Never select a {% if tagCompanion %}non-companion {% endif %}NPC just because they're listed — proximity alone is not a reason for bystanders to speak
+- Honor each NPC's Interjection guidance strictly
+- Do NOT select {{ lastSpeaker.name }} as speaker (they just spoke — but they CAN be selected as target)
+{% if lastDialogueTarget.name %}- {{ lastSpeaker.name }} was addressing {% if lastDialogueTarget.UUID == player.UUID %}the player{% else %}{{ lastDialogueTarget.name }}{% endif %}. {% if lastDialogueTarget.UUID == player.UUID %}If it was a direct question, prefer silence. {% if tagCompanion %}If it was a statement or comment, a companion may speak — but they should address {{ lastSpeaker.name }} or another companion, not the player.{% endif %}{% else %}{{ lastDialogueTarget.name }} is the natural next speaker if the exchange warrants a reply.{% endif %}
+{% endif %}- **No meta-commentary about silence** — Never select an NPC to comment on the player not talking, to urge the player to speak, to urge an action out of impatience, or to narrate the waiting. NPCs do not have awareness that "the player is taking too long" — they simply wait.
+- Regular NPCs cannot hear Virtual NPCs. {% if tagCompanion %}Companions *may* hear Virtual NPCs, if they are with the player and selected as a target of Virtual NPC dialogue. {% endif %}Do not select an NPC to respond directly to a Virtual NPC{% if tagCompanion %} unless they are a companion and they are responding to Virtual NPC dialogue they heard{% endif %}.
+- Virtual NPCs may be selected as speaker but may NOT be selected as a target unless the speaker is also a Virtual NPC {% if tagCompanion %}or a companion{% endif %}.
+
+{{ get_scene_context(0, 0, "full")}}
+[ end system ]
+
+[ user ]
+## Location
+{{ location }}
+
+## Recent Dialogue
+{{ render_template("components\\event_history_compact") }}
+
+{% if existsIn(lastSpeaker, "name") and existsIn(lastDialogueTarget, "name") %}
+**Last exchange:** {{ lastSpeaker.name }} was speaking to {{ lastDialogueTarget.name }}
+{% elif existsIn(lastSpeaker, "name") %}
+**Last speaker:** {{ lastSpeaker.name }} (general comment, no specific target)
+{% endif %}
+
+## Candidates
+{% for candidate in candidateDialogues %}
+{% if candidate.UUID and candidate.UUID != 0 %}
+{% set cinfo = decnpc(candidate.UUID) %}
+{% if cinfo.isVirtual %}
+{{ candidate.id }}. **{{ cinfo.name }}**{% if cinfo.isVirtualPrivate %} (Virtual NPC){% endif %}
+   - {{ render_character_profile("short_inline", candidate.UUID) }}
+   - **Interjection**: {{ render_character_profile("interject_inline", candidate.UUID) }}
+{% else %}
+{{ candidate.id }}. **{{ cinfo.name }}** ({{ cinfo.gender }} {{ cinfo.race }}, {{ units_to_meters(candidate.distance) }}m){% if tagCompanion and is_follower(candidate.UUID) %} **[COMPANION]**{% endif %}{% if tagEngaged and is_in_package(candidate.UUID, "SkyrimNet_PlayerFollowPackage") %} **[ENGAGED]**{% endif %}{% if tagInScene and (is_in_faction(candidate.UUID, "SexLabAnimatingFaction") or is_in_faction(candidate.UUID, "OStimExcitementFaction")) %} **[IN SCENE]**{% endif %}
+   - {{ render_character_profile("short_inline", candidate.UUID) }}
+   - **Interjection**: {{ render_character_profile("interject_inline", candidate.UUID) }}
+{% endif %}
+{% endif %}
+{% endfor %}
+
+{% if tagCompanion or tagEngaged or tagInScene %}
+**Tag meanings:**
+{% if tagCompanion %}- `[COMPANION]` — Player's active follower. More invested in the player's affairs and naturally reacts to things around the player.
+{% endif %}{% if tagEngaged %}- `[ENGAGED]` — This NPC has heightened conversational engagement and a lower threshold to speak. They are more likely to join conversations.
+{% endif %}{% if tagInScene %}- `[IN SCENE]` — This NPC is currently in an intimate/sexual scene. **Strongly deprioritize** — they are physically occupied and should almost never be selected as speaker.
+{% endif %}{% endif %}
+
+**Targeting rules:**
+- Consider who was just speaking to whom.{% if existsIn(lastSpeaker, "name") and existsIn(lastDialogueTarget, "name") %} {{ lastSpeaker.name }} was just speaking to {{ lastDialogueTarget.name }} — if {{ lastDialogueTarget.name }} is a candidate, they should typically respond back to {{ lastSpeaker.name }}, not redirect to the player.{% endif %}
+- Only use `player` as target when the NPC is genuinely addressing the player.
+- NPC-to-NPC exchanges should wind down. After 2-3 back-and-forths between the same two NPCs, the topic is usually resolved — the next turn can pivot back to the player (target = `player`) or end in silence.
+- A chosen speaker CAN pivot their target back to `player` even if the immediately prior line was NPC-to-NPC — if the speaker's reason to speak is genuinely directed at the player (reacting to something the player did, answering the player's earlier question, sharing a decision with the player, pulling the player's attention to something), target = `player`. The prior NPC-to-NPC line does not lock in future targeting.
+- When in doubt between continuing NPC-to-NPC vs pivoting to player: if the player was the scene's original initiator and the NPC-to-NPC exchange was a brief side-comment, pivot back to player.
+- **Always specify a target** — every output must be exactly `0` or `[speaker]>[target]`. Never output `[speaker]>` with an empty target. Never leave the target ambiguous or unnamed. If unsure, prefer `player` over an NPC name you're not confident about.
+
+### Examples
+- CORRECT: `Aela the Huntress>Lydia`
+{% if random < zerochance %}- CORRECT: `0`
+{% endif %}- INCORRECT: `Aela the Huntress [Female Nord]>Lydia` (do not add gender and race)
+- INCORRECT: `Aela the Huntress to Lydia` (use ">" not "to")
+- INCORRECT: `**Aela the Huntress**>**Lydia**` (no asterisks)
+- INCORRECT: `Aela>Lydia` (use exact full name, not shortened)
+- INCORRECT: `Aela>{{ player.name }}` (target player as lowercase "player")
+- INCORRECT: `Aela the Huntress>Lydia (because of context)` (no commentary)
+
+IMPORTANT: Do NOT select {{ lastSpeaker.name }} as speaker!
+Output format:{% if random < zerochance %} `0` or {% endif %} `[Name]>[target]`
+[ end user ]

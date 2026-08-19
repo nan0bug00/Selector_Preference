@@ -1,0 +1,135 @@
+{# DRAFT 2 — addressed candidate first
+   PLACEHOLDERS: followerInterruption and nonFollowerInterruption are proposed
+   integer settings. Replace these field names with the actual decorators.
+#}
+[ system ]
+{% set ss = get_speaker_selector_settings() %}
+{% set followerInterruption = default(ss.followerInterruption, 3) %}
+{% set nonFollowerInterruption = default(ss.nonFollowerInterruption, 2) %}
+{% set tagEngaged = ss.tagEngaged %}
+{% set tagInScene = ss.tagInScene %}
+
+{% set hasExchange = existsIn(lastSpeaker, "name") and existsIn(lastDialogueTarget, "name") %}
+{% set playerSpoke = hasExchange and lastSpeaker.UUID == player.UUID %}
+{% set playerWasAddressed = hasExchange and lastDialogueTarget.UUID == player.UUID %}
+{% set playerNonFollowerExchange = false %}
+{% if playerSpoke and not is_follower(lastDialogueTarget.UUID) %}
+{% set playerNonFollowerExchange = true %}
+{% elif playerWasAddressed and not is_follower(lastSpeaker.UUID) %}
+{% set playerNonFollowerExchange = true %}
+{% endif %}
+
+# Select the next reaction
+
+Return only `0` or `[speaker]>[target]`.
+
+`0` means that no NPC speaks. It is always a valid answer.
+
+Use this order:
+
+1. Never select {{ lastSpeaker.name }}.
+2. Consider the person who was addressed. If that person is an NPC candidate and has a natural response, prefer that response.
+3. Only then consider someone else. That person is interrupting and must satisfy the applicable instruction below.
+4. If no candidate qualifies, return `0`.
+
+Do not select anyone because they are nearby, because the player has not answered, or because silence feels uncomfortable.
+
+{% if playerWasAddressed %}
+The player was addressed. The ordinary result is `0`, leaving the player free to answer. Select an NPC only when the applicable interruption instruction permits that candidate and the recent dialogue gives that candidate a specific reason to enter.
+{% endif %}
+
+{% if playerNonFollowerExchange %}
+# Followers entering this player and non-follower exchange
+
+{% if followerInterruption == 1 %}
+No follower qualifies. Do not select one.
+{% elif followerInterruption == 2 %}
+A follower qualifies only when personally addressed or mentioned, when their duty requires an answer here, or when their Interjection text names a specific person discussed in the last line.
+{% elif followerInterruption == 3 %}
+A follower qualifies for the previous reasons, for a clear match anywhere in their Interjection text, or for a role-based reason to enter an actual argument, threat, or fight.
+{% elif followerInterruption == 4 %}
+A follower qualifies for the previous reasons, for a recent decision that affects them, or for a reason in their profile that applies specifically to the last line.
+{% else %}
+A follower qualifies when the dialogue and their supplied character information make entering this exchange characteristic for them. Their presence and follower status alone do not qualify.
+{% endif %}
+{% endif %}
+
+{% if hasExchange %}
+# Non-followers entering an exchange that did not address them
+
+{% if nonFollowerInterruption == 1 %}
+No unrelated non-follower qualifies. Do not select one.
+{% elif nonFollowerInterruption == 2 %}
+An unrelated non-follower qualifies only when personally addressed or mentioned, when their duty requires an answer here, or when their Interjection text names a specific person discussed in the last line.
+{% elif nonFollowerInterruption == 3 %}
+An unrelated non-follower qualifies for the previous reasons, for a clear match anywhere in their Interjection text, or for a role-based reason to enter an actual argument, threat, or fight.
+{% else %}
+An unrelated non-follower qualifies for the previous reasons or for a reason in their profile that applies specifically to the last line. Presence alone does not qualify.
+{% endif %}
+{% endif %}
+
+# Hard restrictions
+
+- `[JUST SPOKE]` is never eligible.
+- `[ADDRESSED]` is not an interrupter.
+- `[ENGAGED]` does not override an interruption instruction.
+- Strongly avoid `[IN SCENE]` unless directly addressed.
+- A regular NPC cannot respond to a Virtual NPC.
+- A Virtual NPC cannot be targeted by a regular NPC.
+
+{{ get_scene_context(0, 0, "full") }}
+[ end system ]
+
+[ user ]
+# Recent Dialogue
+
+{{ render_template("components\\event_history_compact") }}
+
+{% if hasExchange %}
+# Last completed line
+
+**Speaker:** {{ lastSpeaker.name }}
+
+**Recipient:** {{ lastDialogueTarget.name }}
+{% endif %}
+
+# Candidates
+
+{% for candidate in candidateDialogues %}
+{% if candidate.UUID and candidate.UUID != 0 %}
+{% set cinfo = decnpc(candidate.UUID) %}
+{{ candidate.id }}. **{{ cinfo.name }}**{% if hasExchange and candidate.UUID == lastDialogueTarget.UUID %} **[ADDRESSED]**{% endif %}{% if hasExchange and candidate.UUID == lastSpeaker.UUID %} **[JUST SPOKE]**{% endif %}{% if not cinfo.isVirtual and is_follower(candidate.UUID) %} **[FOLLOWER]**{% endif %}{% if not cinfo.isVirtual and tagEngaged and is_in_package(candidate.UUID, "SkyrimNet_PlayerFollowPackage") %} **[ENGAGED]**{% endif %}{% if not cinfo.isVirtual and tagInScene and (is_in_faction(candidate.UUID, "SexLabAnimatingFaction") or is_in_faction(candidate.UUID, "OStimExcitementFaction")) %} **[IN SCENE]**{% endif %}{% if cinfo.isVirtual %} **[VIRTUAL NPC]**{% endif %}
+   - {% if not cinfo.isVirtual %}{{ cinfo.gender }} {{ cinfo.race }}, {{ units_to_meters(candidate.distance) }}m — {% endif %}{{ render_character_profile("short_inline", candidate.UUID) }}
+   - **Interjection:** {{ render_character_profile("interject_inline", candidate.UUID) }}
+{% if playerNonFollowerExchange and not cinfo.isVirtual and is_follower(candidate.UUID) and followerInterruption >= 4 %}
+   - **Personality:** {{ render_character_profile("bio_personality", candidate.UUID) }}
+{% elif hasExchange and not cinfo.isVirtual and not is_follower(candidate.UUID) and candidate.UUID != lastSpeaker.UUID and candidate.UUID != lastDialogueTarget.UUID and nonFollowerInterruption == 4 %}
+   - **Personality:** {{ render_character_profile("bio_personality", candidate.UUID) }}
+{% endif %}
+{% endif %}
+{% endfor %}
+
+# Choose the target
+
+{% if playerSpoke %}
+- If `[ADDRESSED]` responds, target `player`.
+{% else %}
+- If `[ADDRESSED]` responds, target {{ lastSpeaker.name }}.
+{% endif %}
+- If someone interrupts, target the person they are reacting to or genuinely addressing.
+- Use `player` exactly when the selected NPC addresses the player.
+- Otherwise use the target's exact full candidate name.
+- Always include a target.
+
+Valid: `0`
+
+Valid: `Aela the Huntress>Lydia`
+
+Invalid: `Aela>Lydia`
+
+Invalid: `Aela the Huntress to Lydia`
+
+Invalid: `Aela the Huntress>Lydia (because she objected)`
+
+Output:
+[ end user ]

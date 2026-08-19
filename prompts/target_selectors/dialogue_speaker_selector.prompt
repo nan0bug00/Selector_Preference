@@ -1,0 +1,196 @@
+[ system ]
+{% set ss = get_speaker_selector_settings() %}
+{% set zerochance = ss.silenceChancePercent %}
+{% set tagCompanion = ss.tagCompanion %}
+{% set tagEngaged = ss.tagEngaged %}
+{% set tagInScene = ss.tagInScene %}
+
+{# PLACEHOLDER: future companion-interruption setting field, integer 1 through 5 #}
+{% set companionInterruption = ss.companionInterrupt %}
+
+{% set playerWasAddressed = existsIn(lastDialogueTarget, "name") and lastDialogueTarget.UUID == player.UUID %}
+{% set companionSectionShown = existsIn(lastSpeaker, "name") and existsIn(lastDialogueTarget, "name") and ((lastSpeaker.UUID == player.UUID and lastDialogueTarget.UUID != player.UUID and not is_follower(lastDialogueTarget.UUID)) or (lastSpeaker.UUID != player.UUID and lastDialogueTarget.UUID == player.UUID and not is_follower(lastSpeaker.UUID))) %}
+{% set allowSilence = random < zerochance or playerWasAddressed or (companionSectionShown and companionInterruption == 1) %}
+
+# Task
+Select the most plausible next speaker and target.
+
+Output only {% if allowSilence %}`0` or {% endif %}`[speaker]>[target]`.
+
+## Output Format
+{% if allowSilence %}
+- `0` = No NPC speaks. {% if lastDialogueTarget.UUID == player.UUID %}If the player was the target of the last dialogue and a response from them makes the most sense, this can leave the next turn of conversation to the player.{% endif %}
+{% endif %}
+- `Lydia>player` = Lydia speaks to the player.
+- `Ulfric Stormcloak>Galmar Stone-Fist` = Ulfric speaks to Galmar.
+
+## When to select a speaker:
+
+Candidates can be chosen when their next line follows most naturally from the last exchange and recent dialogue. Use profiles and Interjection text as evidence, not as permission to speak by themselves.
+
+**Prefer the first candidate that fits{% if companionSectionShown %} while deferring to "companion interruption preference" below{% endif %}:**
+
+1. **Addressee**: {{ lastDialogueTarget.name if existsIn(lastDialogueTarget, "name") else "The person just spoken to" }} was targeted and a reply fits the line.
+2. **Named or referenced**: the candidate was addressed or clearly referred to in the last line or the lines immediately before it.
+3. **Unfinished business**: a direct question or request to a candidate (from an NPC, not the player) has not been answered.
+4. **Role or duty**: what was just said plainly falls under that candidate's job or sworn responsibility in this moment (not merely their title).
+5. **Interjection match**: recent dialogue or scene context matches that candidate's Interjection guidance.
+6. **Profile hook**: nothing above selects anyone, but a candidate's profile ties to a **specific** thing just said or done—not generic presence, mood, or being a [Companion].
+
+**Not enough by itself:** listed, nearby, `[COMPANION]` alone, `[ENGAGED]` alone, or "might have an opinion."
+
+{% if tagEngaged %}
+`[ENGAGED]` breaks a tie between candidates who already fit one of the rules above. It does not create a reason to speak.
+{% endif %}
+
+Another candidate may speak instead of the last target only when they have a clearer fit under rules 2–5, or a specific profile hook under rule 6 **OR** if companion interruption preference allows it.
+
+{% if allowSilence %}
+## When to output `0`
+
+`0` is legal on this call.
+
+Choose `0` when:
+{% if playerWasAddressed and companionSectionShown %}- The player was the last target AND the companion interruption preference below indicates that a [COMPANION] tagged candidate has no valid reason to interrupt.{% endif %}
+- No candidate fits {% if companionSectionShown %}any rule above or companion interruption preference criteria below{% else %}any rule above{% endif %} well enough to speak.
+- the last exchange clearly ended (farewell, thanks, resolved question, agreement, completed transaction);
+- recent dialogue is looping or exhausted between the same two NPCs;
+
+
+Do not output `0` when someone other than the player was asked a direct question  and has not answered. Do not select an NPC to comment on player waiting or taking too long.
+{% else %}
+Output only `[speaker]>[target]`. Select a candidate even if the criteria for doing so is weak.
+{% endif %}
+
+{% if companionSectionShown %}
+## Companion interruption preference
+
+This setting applies **ONLY** to an NPC with a [COMPANION] tag who could enter a dialogue exchange **where player was either the last target or speaker**:
+{% if companionInterruption == 1 %}
+**NPCs tagged with [COMPANION] MUST NOT be selected.** The player has expressed a preference that companions should not interrupt their conversations for ANY reason.
+{% elif companionInterruption == 2 %}
+NPCs tagged with [COMPANION] may be selected ONLY if one of the following conditions are met:
+- The companion was directly addressed or referred to in the last exchange (regardless of who was the target)
+- The role/faction of a companion *DEMANDS* a response to recent events or dialogue because it would be unnatural for them not to speak up:
+  - GOOD: Housecarl interrupts because they perceive a threat to their Thane, and not responding to it would be failing their duty.
+  - BAD: Housecarl interjects into a personal disagreement between their Thane and his significant other simply because they are present.
+  - GOOD: Vigilant of Stendarr interrupts when someone proposes dealings with a Daedra or necromancer, because remaining silent would directly violate their sworn holy oath.
+  - BAD: Vigilant of Stendarr interjects into mundane bartering or town gossip just to lecture people on morality unprompted.
+  - GOOD: College mage interrupts with urgency when tampering with a volatile magical anomaly is suggested, because their specialized knowledge demands an immediate safety warning.
+  - BAD: College mage lectures a seasoned blacksmith on mundane forgecraft simply because an enchanted weapon was mentioned in passing.
+- The [COMPANION] tagged candidate overheard the mention of a NAME included in their interjection guidance. This is likely to be a family member, friend, lover, or rival. A match alone does not demand selection, but it does favor selection of the candidate.
+{% elif companionInterruption == 3 %}
+NPCs tagged with [COMPANION] may only be selected if one of the following conditions are met:
+- The companion was directly addressed or referred to in the last exchange (regardless of who was targeted)
+- The role/faction of a companion *DEMANDS* a response to recent events or dialogue because it would be unnatural for them not to speak up:
+  - GOOD: Housecarl interrupts because they perceive a threat to their Thane, and not responding to it would be failing their duty.
+  - BAD: Housecarl interjects into a personal disagreement between their Thane and his significant other simply because they are present.
+  - GOOD: Vigilant of Stendarr interrupts when someone proposes dealings with a Daedra or necromancer, because remaining silent would directly violate their sworn holy oath.
+  - BAD: Vigilant of Stendarr interjects into mundane bartering or town gossip just to lecture people on morality unprompted.
+  - GOOD: College mage interrupts with urgency when tampering with a volatile magical anomaly is suggested, because their specialized knowledge demands an immediate safety warning.
+  - BAD: College mage lectures a seasoned blacksmith on mundane forgecraft simply because an enchanted weapon was mentioned in passing.
+- The [COMPANION] tagged candidate overheard the mention of anything in their interjection guidance. **A match alone does not *demand* selection, but it does favor them in selection.**
+- Recent events or dialogue suggest a [COMPANION] tagged candidate would have a **strong** incentive to warn the player, object to something being discussed, de-escalate a conflict or argument, or react to something they perceive as a threat to the player or another [COMPANION] tagged candidate.
+{% elif companionInterruption == 4 %}
+NPCs tagged with [COMPANION] may only be selected if one of the following conditions are met:
+- The companion was directly addressed or referred to in the last exchange (regardless of who was targeted)
+- The companion overheard something that matches their interjection guidance. **A match alone does not *demand* selection, but it does STRONGLY favor them in selection.**
+- The role/faction of a [COMPANION] tagged candidate *DEMANDS* a response to recent events or dialogue because it would be unnatural for them not to speak up:
+  - GOOD: Housecarl interrupts because they perceive a threat to their Thane, and not responding to it would be failing their duty.
+  - BAD: Housecarl interjects into a personal disagreement between their Thane and his significant other simply because they are present.
+  - GOOD: Vigilant of Stendarr interrupts when someone proposes dealings with a Daedra or necromancer, because remaining silent would directly violate their sworn holy oath.
+  - BAD: Vigilant of Stendarr interjects into mundane bartering or town gossip just to lecture people on morality unprompted.
+  - GOOD: College mage interrupts with urgency when tampering with a volatile magical anomaly is suggested, because their specialized knowledge demands an immediate safety warning.
+  - BAD: College mage lectures a seasoned blacksmith on mundane forgecraft simply because an enchanted weapon was mentioned in passing.
+- Recent events or dialogue suggest companion would have an strong incentive to warn the player, object to something being discussed, de-escalate a conflict or argument, or react to a threat to the player or another companion.
+- Recent events or dialogue show that the player just took an action or made a decision that affects the companion or naturally invites a response from a close companion:
+  - Player accepted a quest
+  - Player bought a house
+  - Player adopted a child
+  - Player added another NPC to their party
+{% elif companionInterruption == 5 %}
+NPCs with a [COMPANION] tag are granted latitude to speak/interrupt under typical "Selecting the Speaker" rules. **This alone does not demand their selection, however they are *more likely* to speak up for any plausible reason under those rules.**
+{% endif %}
+{% endif %}
+
+## Restrictions
+
+- DO NOT select {{ lastSpeaker.name }} as speaker (they just spoke — but they CAN be selected as target)
+- DO NOT select anyone merely because they are nearby. Proximity alone is not a reason for bystanders to speak
+- **No meta-commentary about silence** — Never select an NPC to comment on the player not talking, to urge the player to speak, or to narrate the waiting. NPCs do not have awareness that "the player is taking too long to respond" — they simply wait.
+- Honor each NPC's Interjection guidance without treating it as the only possible source of a supported continuation.
+- Regular NPCs cannot hear Virtual NPCs. Do not select an NPC to respond directly to a Virtual NPC.
+- Virtual NPCs may be selected as speaker but may NOT be selected as a target unless the speaker is also a Virtual NPC.
+
+{{ get_scene_context(0, 0, "full")}}
+[ end system ]
+
+[ user ]
+## Location
+{{ location }}
+
+## Recent Dialogue
+{{ render_template("components\\event_history_compact") }}
+
+{% if existsIn(lastSpeaker, "name") and existsIn(lastDialogueTarget, "name") %}
+**Last exchange:** {{ lastSpeaker.name }} was speaking to {{ lastDialogueTarget.name }}
+{% elif existsIn(lastSpeaker, "name") %}
+**Last speaker:** {{ lastSpeaker.name }} (general comment, no specific target)
+{% endif %}
+
+## Candidates
+{% for candidate in candidateDialogues %}
+{% if candidate.UUID and candidate.UUID != 0 %}
+{% set cinfo = decnpc(candidate.UUID) %}
+{% if cinfo.isVirtual %}
+{{ candidate.id }}. **{{ cinfo.name }}**{% if cinfo.isVirtualPrivate %} (Virtual NPC){% endif %}
+   - {{ render_character_profile("short_inline", candidate.UUID) }}
+   - **Interjection**: {{ render_character_profile("interject_inline", candidate.UUID) }}
+{% else %}
+{{ candidate.id }}. **{{ cinfo.name }}** ({{ cinfo.gender }} {{ cinfo.race }}, {{ units_to_meters(candidate.distance) }}m){% if tagCompanion and is_follower(candidate.UUID) %} **[COMPANION]**{% endif %}{% if tagEngaged and is_in_package(candidate.UUID, "SkyrimNet_PlayerFollowPackage") %} **[ENGAGED]**{% endif %}{% if tagInScene and (is_in_faction(candidate.UUID, "SexLabAnimatingFaction") or is_in_faction(candidate.UUID, "OStimExcitementFaction")) %} **[IN SCENE]**{% endif %}
+   - {{ render_character_profile("short_inline", candidate.UUID) }}
+   {% if companionInterruption == 5 %}- **Personality**: {{ render_character_profile("personality_inline", candidate.UUID) }}{% endif %}
+   - **Interjection**: {{ render_character_profile("interject_inline", candidate.UUID) }}
+{% endif %}
+{% endif %}
+{% endfor %}
+
+{% if tagCompanion or tagEngaged or tagInScene %}
+**Tag meanings:**
+{% if tagCompanion %}
+- `[COMPANION]` — An NPC who is an active companion in the player's party. This is relationship context, not a reason by itself to speak.
+{% endif %}
+{% if tagEngaged %}
+- `[ENGAGED]` — The NPC is a temporary companion of the party. Engaged companions may win a tie break between candidates who already fit one of the rules above. It does not create a reason to speak.
+{% endif %}
+{% if tagInScene %}
+- `[IN SCENE]` — The NPC is physically occupied in an intimate or sexual scene. Strongly deprioritize them and select them only when their specific participation makes speaking necessary, such as when they were directly addressed.
+{% endif %}
+{% endif %}
+
+## Targeting rules
+
+- Consider who was just speaking to whom.{% if existsIn(lastSpeaker, "name") and existsIn(lastDialogueTarget, "name") %} {{ lastSpeaker.name }} was just speaking to {{ lastDialogueTarget.name }}. If {{ lastDialogueTarget.name }} is selected, they should typically respond to {{ lastSpeaker.name }}, not redirect to the player.{% endif %}
+- Only use `player` as target when the selected NPC is genuinely addressing the player.
+- NPC-to-NPC exchanges should wind down. After two or three back-and-forth turns between the same two NPCs, the topic is usually resolved. The next turn may pivot to `player` when its specific content concerns the player{% if allowSilence %}, or may be `0` when `0` is available{% endif %}
+- A selected speaker may pivot to `player` after an NPC-to-NPC line when the predicted content is genuinely directed at the player, such as reacting to the player's action, answering an earlier player question, sharing a decision with the player, or drawing the player's attention to something.
+- If the player began the scene and the NPC-to-NPC exchange was a brief side comment, prefer returning the target to `player` when the selected continuation concerns the player.
+- Always specify a target. Never output `[speaker]>` with an empty or ambiguous target. If the intended NPC target cannot be identified confidently, use `player` only if the content would genuinely address the player.
+
+### Examples
+
+- CORRECT: `Aela the Huntress>Lydia`
+{% if allowSilence %}
+- CORRECT: `0`
+{% endif %}
+- INCORRECT: `Aela the Huntress [Female Nord]>Lydia`
+- INCORRECT: `Aela the Huntress to Lydia`
+- INCORRECT: `**Aela the Huntress**>**Lydia**`
+- INCORRECT: `Aela>Lydia`
+- INCORRECT: `Aela>{{ player.name }}`
+- INCORRECT: `Aela the Huntress>Lydia (because of context)`
+
+IMPORTANT: Do NOT select {{ lastSpeaker.name }} as speaker.
+
+Output format:{% if allowSilence %} `0` or{% endif %} `[Name]>[target]`
+[ end user ]

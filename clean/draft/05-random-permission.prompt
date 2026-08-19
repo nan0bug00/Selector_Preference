@@ -1,0 +1,153 @@
+{# DRAFT 5 — random interruption permission
+   Intent: the model does not interpret Rare/Sometimes/Often. Jinja converts the
+   selected position and SkyrimNet's existing random value into allowed/blocked
+   interruption classes for this call.
+
+   PLACEHOLDERS: followerInterruption and nonFollowerInterruption are proposed
+   integer settings. The percentages below are illustrative and require testing.
+   This draft reuses the same `random` value as the existing silence roll, so the
+   resulting correlation must also be tested.
+#}
+[ system ]
+{% set ss = get_speaker_selector_settings() %}
+{% set zerochance = ss.silenceChancePercent %}
+{% set followerInterruption = default(ss.followerInterruption, 3) %}
+{% set nonFollowerInterruption = default(ss.nonFollowerInterruption, 2) %}
+{% set tagEngaged = ss.tagEngaged %}
+{% set tagInScene = ss.tagInScene %}
+
+{% set hasExchange = existsIn(lastSpeaker, "name") and existsIn(lastDialogueTarget, "name") %}
+{% set playerSpoke = hasExchange and lastSpeaker.UUID == player.UUID %}
+{% set playerWasAddressed = hasExchange and lastDialogueTarget.UUID == player.UUID %}
+{% set silenceAllowed = playerWasAddressed or random < zerochance %}
+{% set playerNonFollowerExchange = false %}
+{% if playerSpoke and not is_follower(lastDialogueTarget.UUID) %}
+{% set playerNonFollowerExchange = true %}
+{% elif playerWasAddressed and not is_follower(lastSpeaker.UUID) %}
+{% set playerNonFollowerExchange = true %}
+{% endif %}
+
+{% set followerMayInterrupt = false %}
+{% if followerInterruption == 5 %}
+{% set followerMayInterrupt = true %}
+{% elif followerInterruption == 4 and random < 70 %}
+{% set followerMayInterrupt = true %}
+{% elif followerInterruption == 3 and random < 35 %}
+{% set followerMayInterrupt = true %}
+{% elif followerInterruption == 2 and random < 10 %}
+{% set followerMayInterrupt = true %}
+{% endif %}
+
+{% set nonFollowerMayInterrupt = false %}
+{% if nonFollowerInterruption == 4 and random < 80 %}
+{% set nonFollowerMayInterrupt = true %}
+{% elif nonFollowerInterruption == 3 and random < 45 %}
+{% set nonFollowerMayInterrupt = true %}
+{% elif nonFollowerInterruption == 2 and random < 15 %}
+{% set nonFollowerMayInterrupt = true %}
+{% endif %}
+
+# Task
+
+An NPC has spoken to a recipient. Select the next NPC reaction.
+
+Output only {% if silenceAllowed %}`0` or {% endif %}`[exact speaker name]>[exact target]`.
+
+The template has already decided which interruption classes are permitted on this call. Do not infer frequency from a setting label.
+
+# Speaker permissions for this call
+
+- The recipient may respond when that recipient is an NPC candidate.
+- {{ lastSpeaker.name }} may not speak again.
+
+{% if playerNonFollowerExchange %}
+{% if followerMayInterrupt %}
+- A follower other than the current participants may be selected if they have a specific, natural reaction to the completed line or recent context.
+{% else %}
+- Do not select a follower other than the current participants. Follower interruption is blocked on this call.
+{% endif %}
+{% endif %}
+
+{% if hasExchange %}
+{% if nonFollowerMayInterrupt %}
+- A non-follower who is not already part of this exchange may be selected if they have a specific, natural reaction to the completed line or recent context.
+{% else %}
+- Do not select a non-follower who is not already part of this exchange. Non-follower interruption is blocked on this call.
+{% endif %}
+{% endif %}
+
+Permission does not mean that someone must speak. For every permitted candidate, consider the completed line, recent dialogue, short profile, role, and Interjection guidance together. These are evidence for a reaction, not an exhaustive checklist.
+
+Prefer the recipient when they have the most natural immediate response. Select another permitted candidate when their reaction belongs at this moment rather than starting a new subject. Do not select anyone merely because they are nearby or because a generic line could be written for them.
+
+{% if silenceAllowed %}
+Select `0` when the player was addressed and no permitted interruption should take the floor, or when the exchange has naturally ended and no permitted candidate has an immediate reaction.
+{% endif %}
+
+Never select an NPC to comment on silence, urge the player to respond, or narrate waiting.
+
+# Virtual NPC restrictions
+
+- A regular NPC cannot hear or answer a Virtual NPC.
+- A regular NPC cannot target a Virtual NPC.
+- A Virtual NPC may target another Virtual NPC.
+
+{{ get_scene_context(0, 0, "full") }}
+[ end system ]
+
+[ user ]
+# Location
+
+{{ location }}
+
+# Recent Dialogue
+
+{{ render_template("components\\event_history_compact") }}
+
+{% if hasExchange %}
+# Completed line
+
+**{{ lastSpeaker.name }} spoke to {{ lastDialogueTarget.name }}.**
+{% endif %}
+
+# Candidates
+
+{% for candidate in candidateDialogues %}
+{% if candidate.UUID and candidate.UUID != 0 %}
+{% set cinfo = decnpc(candidate.UUID) %}
+{{ candidate.id }}. **{{ cinfo.name }}**{% if hasExchange and candidate.UUID == lastDialogueTarget.UUID %} **[RECIPIENT]**{% endif %}{% if hasExchange and candidate.UUID == lastSpeaker.UUID %} **[PREVIOUS SPEAKER — BLOCKED]**{% endif %}{% if not cinfo.isVirtual and is_follower(candidate.UUID) %} **[FOLLOWER]**{% endif %}{% if playerNonFollowerExchange and not cinfo.isVirtual and is_follower(candidate.UUID) and candidate.UUID != lastSpeaker.UUID and candidate.UUID != lastDialogueTarget.UUID %}{% if followerMayInterrupt %} **[INTERRUPTION PERMITTED]**{% else %} **[INTERRUPTION BLOCKED]**{% endif %}{% elif hasExchange and not cinfo.isVirtual and not is_follower(candidate.UUID) and candidate.UUID != lastSpeaker.UUID and candidate.UUID != lastDialogueTarget.UUID %}{% if nonFollowerMayInterrupt %} **[INTERRUPTION PERMITTED]**{% else %} **[INTERRUPTION BLOCKED]**{% endif %}{% endif %}{% if not cinfo.isVirtual and tagEngaged and is_in_package(candidate.UUID, "SkyrimNet_PlayerFollowPackage") %} **[ENGAGED]**{% endif %}{% if not cinfo.isVirtual and tagInScene and (is_in_faction(candidate.UUID, "SexLabAnimatingFaction") or is_in_faction(candidate.UUID, "OStimExcitementFaction")) %} **[IN SCENE]**{% endif %}{% if cinfo.isVirtual %} **[VIRTUAL NPC]**{% endif %}
+   - {% if not cinfo.isVirtual %}{{ cinfo.gender }} {{ cinfo.race }}, {{ units_to_meters(candidate.distance) }}m — {% endif %}{{ render_character_profile("short_inline", candidate.UUID) }}
+   - **Interjection:** {{ render_character_profile("interject_inline", candidate.UUID) }}
+{% if playerNonFollowerExchange and followerMayInterrupt and not cinfo.isVirtual and is_follower(candidate.UUID) and followerInterruption >= 4 %}
+   - **Personality:** {{ render_character_profile("bio_personality", candidate.UUID) }}
+{% elif hasExchange and nonFollowerMayInterrupt and not cinfo.isVirtual and not is_follower(candidate.UUID) and candidate.UUID != lastSpeaker.UUID and candidate.UUID != lastDialogueTarget.UUID and nonFollowerInterruption == 4 %}
+   - **Personality:** {{ render_character_profile("bio_personality", candidate.UUID) }}
+{% endif %}
+{% endif %}
+{% endfor %}
+
+`[ENGAGED]` never overrides `[INTERRUPTION BLOCKED]`. Strongly avoid `[IN SCENE]` unless directly addressed.
+
+# Targeting
+
+{% if playerSpoke %}
+- A responding `[RECIPIENT]` targets `player`.
+{% else %}
+- A responding `[RECIPIENT]` targets {{ lastSpeaker.name }}.
+{% endif %}
+- Another speaker targets the person they are specifically reacting to or addressing.
+- Use `player` in lowercase for the player.
+- Otherwise use an exact full candidate name.
+- Always include a target.
+
+Examples:
+
+- `Aela the Huntress>Lydia`
+{% if silenceAllowed %}
+- `0`
+{% endif %}
+
+Do not add tags, formatting, explanation, or shortened names.
+
+Output:
+[ end user ]

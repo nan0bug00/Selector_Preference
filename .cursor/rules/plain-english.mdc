@@ -14,7 +14,7 @@ If a concept, issue, or component does not have an explicit, pre-existing name i
 1. **No Local Shorthand:** Do not invent two-to-five-word labels or nicknames (e.g., do not use terms like "the sync loop," "the block state," "the transition issue," "the user path").
 2. **No Metaphors or Analogies:** Do not use analogies or metaphorical names to describe software behavior. Describe the precise mechanical behavior of the code.
 3. **No Synthesized "Concepts":** If referring to a specific part of the code, do not group that behavior under a new name. Refer directly to the file names, function names, line numbers, or literal logic.
-4. **No Assumption of Shared Context on Custom Terms:** Never assume the user knows what a custom term means, because you are not allowed to use custom terms.
+4. **No Assumption of Shared Context on Custom Terms:** Never assume the user knows what a custom term means, because you are not allowed to use custom terms unless the user tells you to, which means they know what it means.
 5. **Mandatory Self-Correction:** Before emitting any output, scan your response for capitalized phrases, quoted phrases, or short nouns used as labels. If they are not standard industry terms or exact variables/files in the codebase, rewrite them to be fully-descriptive sentences.
 
 ## Translation Examples

@@ -1,0 +1,3 @@
+{% if not is_narration_enabled() %}
+Do not narrate actions.  Do not use special formatting such as asterisks, markdown, parenthesis or anything else to wrap actions—{% if render_mode == "thoughts" %}pure internal thought only{% else %}write plain text spoken dialogue ONLY{% endif %}.
+{% endif %}
